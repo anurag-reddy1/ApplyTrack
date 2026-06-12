@@ -4,6 +4,8 @@
  * Handles: application listing, filtering, search, CRUD modal, metrics display.
  */
 
+/* global bootstrap */
+
 import {
   getApplications,
   getMetrics,
@@ -38,6 +40,7 @@ let editingId = null; // null = create mode, string = edit mode
 
 // Init
 const init = async () => {
+  bsModal = new bootstrap.Modal($("app-modal"));
   $("nav-username").textContent = username;
   await Promise.all([loadApplications(), loadMetrics()]);
 };
@@ -122,9 +125,13 @@ const renderTable = () => {
 };
 
 const buildRow = (app) => {
-  const jobLinkHtml = app.jobLink
-    ? `<a href="${escapeHtml(app.jobLink)}" target="_blank" rel="noopener noreferrer" title="Open job posting">↗</a>`
-    : "—";
+  let jobLinkHtml = "—";
+  if (app.jobLink) {
+    const href = /^https?:\/\//i.test(app.jobLink)
+      ? app.jobLink
+      : `https://${app.jobLink}`;
+    jobLinkHtml = `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="Open job posting">↗</a>`;
+  }
 
   return `
     <tr>
@@ -175,8 +182,8 @@ $("search-input").addEventListener("input", (e) => {
 // Add Button
 $("add-app-btn").addEventListener("click", () => openCreateModal());
 
-// Bootstrap Modal instance
-const bsModal = new bootstrap.Modal($("app-modal"));
+// Bootstrap Modal instance — initialized in init() once Bootstrap is ready
+let bsModal;
 
 // Focus company field after modal animation completes
 $("app-modal").addEventListener("shown.bs.modal", () => {

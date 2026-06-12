@@ -7,10 +7,10 @@ body {
   min-height: 100vh;
 }
 
-/* Navbar */
-.nav-header {
-  background-color: var(--color-bg-2) !important;
-  border-bottom: 1px solid var(--color-border) !important;
+/* Navbar — .navbar.nav-header beats Bootstrap's .navbar selector */
+.navbar.nav-header {
+  background-color: var(--color-bg-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .nav-inner {
@@ -24,10 +24,11 @@ body {
   width: 100%;
 }
 
-.nav-brand {
+/* .navbar-brand.nav-brand beats Bootstrap's .navbar-brand selector */
+.navbar-brand.nav-brand {
   font-size: 1.1rem;
   font-weight: 800;
-  color: var(--color-text) !important;
+  color: var(--color-text);
   letter-spacing: -0.02em;
   text-decoration: none;
 }
@@ -65,15 +66,15 @@ body {
   gap: var(--space-6);
 }
 
-/* Metrics */
-.metric-card {
-  background-color: var(--color-bg-2) !important;
-  border-color: var(--color-border) !important;
+/* Metrics — .card.metric-card beats Bootstrap's .card selector */
+.card.metric-card {
+  background-color: var(--color-bg-2);
+  border-color: var(--color-border);
   transition: border-color var(--transition);
 }
 
-.metric-card:hover {
-  border-color: var(--color-border-light) !important;
+.card.metric-card:hover {
+  border-color: var(--color-border-light);
 }
 
 .metric-value {
@@ -95,8 +96,8 @@ body {
 }
 
 #metric-interviews .metric-value { color: var(--color-warning); }
-#metric-offers .metric-value { color: var(--color-success); }
-#metric-rate .metric-value { color: var(--color-info); }
+#metric-offers .metric-value     { color: var(--color-success); }
+#metric-rate .metric-value       { color: var(--color-info); }
 
 /* Section title */
 .section-title {
@@ -106,21 +107,22 @@ body {
   margin: 0;
 }
 
-/* Search */
-.search-input {
+/* Search — .form-control.search-input beats Bootstrap's .form-control selector */
+.form-control.search-input {
   width: 220px;
-  background-color: var(--color-bg-2) !important;
-  border-color: var(--color-border) !important;
-  color: var(--color-text) !important;
+  background-color: var(--color-bg-2);
+  border-color: var(--color-border);
+  color: var(--color-text);
   font-size: 0.875rem;
 }
 
-.search-input::placeholder { color: var(--color-text-3); }
+.form-control.search-input::placeholder { color: var(--color-text-3); }
 
-.search-input:focus {
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 3px var(--color-primary-dim) !important;
-  background-color: var(--color-bg-2) !important;
+.form-control.search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+  background-color: var(--color-bg-2);
+  color: var(--color-text);
 }
 
 /* Filter Tabs */
@@ -156,10 +158,10 @@ body {
   color: #fff;
 }
 
-/* Table card */
-.table-card {
-  background-color: var(--color-bg-2) !important;
-  border-color: var(--color-border) !important;
+/* Table card — .card.table-card beats Bootstrap's .card selector */
+.card.table-card {
+  background-color: var(--color-bg-2);
+  border-color: var(--color-border);
   overflow: hidden;
 }
 
@@ -187,9 +189,10 @@ body {
   vertical-align: middle;
 }
 
-.td-company {
+/* .table .td-company beats Bootstrap's .table > :not(caption) > * > * color */
+.table .td-company {
   font-weight: 600;
-  color: var(--color-text) !important;
+  color: var(--color-text);
 }
 
 .td-role {
@@ -282,9 +285,10 @@ body {
   font-size: 0.875rem;
 }
 
-.empty-icon  { font-size: 2.5rem; line-height: 1; color: inherit !important; }
-.empty-title { font-size: 1rem; font-weight: 600; color: var(--color-text-2) !important; }
-.empty-sub   { font-size: 0.875rem; color: var(--color-text-3) !important; max-width: 300px; }
+/* .table-empty .empty-* beats Bootstrap's p selector */
+.table-empty .empty-icon  { font-size: 2.5rem; line-height: 1; color: inherit; }
+.table-empty .empty-title { font-size: 1rem; font-weight: 600; color: var(--color-text-2); }
+.table-empty .empty-sub   { font-size: 0.875rem; color: var(--color-text-3); max-width: 300px; }
 
 /* Modal overrides */
 .app-modal-content {
@@ -306,6 +310,7 @@ body {
   color: var(--color-text-2);
 }
 
+/* .app-modal-content .form-control beats Bootstrap's .form-control selector */
 .app-modal-content .form-control,
 .app-modal-content .form-select {
   background-color: var(--color-bg-3);
@@ -333,7 +338,7 @@ body {
     padding: var(--space-5) var(--space-4);
   }
 
-  .search-input {
+  .form-control.search-input {
     width: 100%;
     flex: 1;
   }

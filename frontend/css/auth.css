@@ -13,26 +13,27 @@ body {
   padding: 20px;
 }
 
-.auth-card {
-  background-color: var(--color-bg-2) !important;
-  border-color: var(--color-border) !important;
+/* .card.auth-card is more specific than Bootstrap's [data-bs-theme="dark"] .card */
+.card.auth-card {
+  background-color: var(--color-bg-2);
+  border-color: var(--color-border);
   box-shadow: var(--shadow-lg);
 }
 
-.auth-card .form-control {
+.card.auth-card .form-control {
   background-color: var(--color-bg-3);
   border-color: var(--color-border);
   color: var(--color-text);
 }
 
-.auth-card .form-control:focus {
+.card.auth-card .form-control:focus {
   background-color: var(--color-bg-3);
   border-color: var(--color-primary);
   color: var(--color-text);
   box-shadow: 0 0 0 3px var(--color-primary-dim);
 }
 
-.auth-card .form-control::placeholder {
+.card.auth-card .form-control::placeholder {
   color: var(--color-text-3);
 }
 
