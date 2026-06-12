@@ -1,12 +1,8 @@
-/* 
-   auth.css — Login / Register page styles
+/*
+  auth.css — Auth page overrides (brand + background only)
 */
 
 body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
   background-color: var(--color-bg);
   background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(79, 124, 255, 0.12), transparent);
 }
@@ -14,24 +10,37 @@ body {
 .auth-container {
   width: 100%;
   max-width: 420px;
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+  padding: 20px;
+}
+
+.auth-card {
+  background-color: var(--color-bg-2) !important;
+  border-color: var(--color-border) !important;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-card .form-control {
+  background-color: var(--color-bg-3);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.auth-card .form-control:focus {
+  background-color: var(--color-bg-3);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+}
+
+.auth-card .form-control::placeholder {
+  color: var(--color-text-3);
 }
 
 /* Brand */
-.auth-brand {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .brand-icon {
   font-size: 2.5rem;
   line-height: 1;
+  margin-bottom: 8px;
 }
 
 .brand-name {
@@ -47,42 +56,9 @@ body {
 .brand-tagline {
   font-size: 0.9rem;
   color: var(--color-text-3);
-  font-weight: 400;
 }
 
-/* Card */
-.auth-card {
-  background-color: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8) var(--space-8);
-  box-shadow: var(--shadow-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.auth-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: var(--space-1);
-}
-
-.auth-card form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.auth-switch {
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--color-text-3);
-  margin-top: var(--space-1);
-}
-
-/* Loading state on button */
+/* Loading state */
 .btn-primary.loading {
   opacity: 0.7;
   cursor: not-allowed;

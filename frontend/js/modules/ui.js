@@ -20,7 +20,7 @@ export const showToast = (message, type = "success", duration = 3000) => {
   if (toastTimer) clearTimeout(toastTimer);
 
   toast.textContent = message;
-  toast.className = `toast ${type === "error" ? "error" : ""}`;
+  toast.className = `toast-custom ${type === "error" ? "error" : ""}`;
   toast.classList.remove("hidden");
 
   toastTimer = setTimeout(() => {

@@ -175,6 +175,19 @@ $("search-input").addEventListener("input", (e) => {
 // Add Button
 $("add-app-btn").addEventListener("click", () => openCreateModal());
 
+// Bootstrap Modal instance
+const bsModal = new bootstrap.Modal($("app-modal"));
+
+// Focus company field after modal animation completes
+$("app-modal").addEventListener("shown.bs.modal", () => {
+  $("field-company").focus();
+});
+
+// Reset editing state when modal is fully hidden
+$("app-modal").addEventListener("hidden.bs.modal", () => {
+  editingId = null;
+});
+
 // Modal Logic
 const openCreateModal = () => {
   editingId = null;
@@ -182,9 +195,7 @@ const openCreateModal = () => {
   $("modal-submit-btn").textContent = "Save Application";
   $("app-form").reset();
   clearError("modal-error");
-  hide($("app-id"));
-  show($("app-modal"));
-  $("field-company").focus();
+  bsModal.show();
 };
 
 const openEditModal = (app) => {
@@ -203,29 +214,12 @@ const openEditModal = (app) => {
   $("field-job-link").value = app.jobLink ?? "";
   $("field-notes").value = app.notes ?? "";
 
-  show($("app-modal"));
-  $("field-company").focus();
+  bsModal.show();
 };
 
 const closeModal = () => {
-  hide($("app-modal"));
-  editingId = null;
+  bsModal.hide();
 };
-
-$("modal-close-btn").addEventListener("click", closeModal);
-$("modal-cancel-btn").addEventListener("click", closeModal);
-
-// Close on overlay click
-$("app-modal").addEventListener("click", (e) => {
-  if (e.target === $("app-modal")) closeModal();
-});
-
-// Close on Escape key
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !$("app-modal").classList.contains("hidden")) {
-    closeModal();
-  }
-});
 
 // Form Submit (Create / Update)
 $("app-form").addEventListener("submit", async (e) => {
