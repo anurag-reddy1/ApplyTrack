@@ -20,11 +20,11 @@ export const showToast = (message, type = "success", duration = 3000) => {
   if (toastTimer) clearTimeout(toastTimer);
 
   toast.textContent = message;
-  toast.className = `toast ${type === "error" ? "error" : ""}`;
-  toast.classList.remove("hidden");
+  toast.className = `toast-custom ${type === "error" ? "error" : ""}`;
+  toast.classList.remove("d-none");
 
   toastTimer = setTimeout(() => {
-    toast.classList.add("hidden");
+    toast.classList.add("d-none");
   }, duration);
 };
 
@@ -77,11 +77,11 @@ export const toInputDate = (iso) => {
 /** Shorthand for document.getElementById */
 export const $ = (id) => document.getElementById(id);
 
-/** Show an element (removes 'hidden' class) */
-export const show = (el) => el?.classList.remove("hidden");
+/** Show an element (removes 'd-none' class) */
+export const show = (el) => el?.classList.remove("d-none");
 
-/** Hide an element (adds 'hidden' class) */
-export const hide = (el) => el?.classList.add("hidden");
+/** Hide an element (adds 'd-none' class) */
+export const hide = (el) => el?.classList.add("d-none");
 
 /** Set error message in an error container */
 export const setError = (elId, message) => {

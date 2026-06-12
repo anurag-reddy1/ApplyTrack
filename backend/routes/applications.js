@@ -82,13 +82,28 @@ router.get("/metrics", async (req, res) => {
       .reduce((acc, s) => acc + s.count, 0);
     const rejected = byStatus.find((s) => s._id === "Rejected")?.count ?? 0;
 
+    // Response rate = applications that got a reply / applications actually submitted
+    const RESPONDED_STATUSES = [
+      "Phone Screen",
+      "Technical Interview",
+      "Final Round",
+      "Offer",
+      "Rejected",
+    ];
+    const responded = byStatus
+      .filter((s) => RESPONDED_STATUSES.includes(s._id))
+      .reduce((acc, s) => acc + s.count, 0);
+    const submitted = byStatus
+      .filter((s) => !["Wishlist", "Withdrawn"].includes(s._id))
+      .reduce((acc, s) => acc + s.count, 0);
+
     return res.status(200).json({
       total,
       offers,
       interviews,
       rejected,
       responseRate:
-        total > 0 ? Math.round(((total - rejected) / total) * 100) : 0,
+        submitted > 0 ? Math.round((responded / submitted) * 100) : 0,
       byStatus,
     });
   } catch (err) {

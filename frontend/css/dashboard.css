@@ -1,21 +1,16 @@
-/* 
-   dashboard.css — Pipeline Dashboard styles
+/*
+  dashboard.css — Custom overrides on top of Bootstrap
 */
 
 body {
   background-color: var(--color-bg);
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
-/* Navigation */
-.nav-header {
+/* Navbar — .navbar.nav-header beats Bootstrap's .navbar selector */
+.navbar.nav-header {
   background-color: var(--color-bg-2);
   border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
 
 .nav-inner {
@@ -25,33 +20,20 @@ body {
   height: 60px;
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  justify-content: space-between;
+  width: 100%;
 }
 
-.nav-brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+/* .navbar-brand.nav-brand beats Bootstrap's .navbar-brand selector */
+.navbar-brand.nav-brand {
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--color-text);
   letter-spacing: -0.02em;
   text-decoration: none;
-  flex-shrink: 0;
 }
 
-.nav-brand:hover {
-  color: var(--color-text);
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex: 1;
-}
-
-.nav-link {
+.nav-link-custom {
   padding: 6px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
@@ -61,17 +43,10 @@ body {
   transition: all var(--transition);
 }
 
-.nav-link:hover,
-.nav-link.active {
+.nav-link-custom:hover,
+.nav-link-custom.active {
   background-color: var(--color-bg-3);
   color: var(--color-text);
-}
-
-.nav-user {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-left: auto;
 }
 
 .nav-username {
@@ -80,7 +55,7 @@ body {
   color: var(--color-text-2);
 }
 
-/* Main Layout */
+/* Main layout */
 .dashboard-main {
   max-width: 1280px;
   margin: 0 auto;
@@ -91,29 +66,14 @@ body {
   gap: var(--space-6);
 }
 
-/* Metrics */
-.metrics-section {
-  margin-top: var(--space-2);
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-4);
-}
-
-.metric-card {
+/* Metrics — .card.metric-card beats Bootstrap's .card selector */
+.card.metric-card {
   background-color: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-5) var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  border-color: var(--color-border);
   transition: border-color var(--transition);
 }
 
-.metric-card:hover {
+.card.metric-card:hover {
   border-color: var(--color-border-light);
 }
 
@@ -132,43 +92,36 @@ body {
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  margin-top: 4px;
 }
 
-#metric-interviews .metric-value {
-  color: var(--color-warning);
-}
-#metric-offers .metric-value {
-  color: var(--color-success);
-}
-#metric-rate .metric-value {
-  color: var(--color-info);
-}
+#metric-interviews .metric-value { color: var(--color-warning); }
+#metric-offers .metric-value     { color: var(--color-success); }
+#metric-rate .metric-value       { color: var(--color-info); }
 
-/* Pipeline Controls */
-.pipeline-controls {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.controls-left {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.controls-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-shrink: 0;
-}
-
+/* Section title */
 .section-title {
   font-size: 1.25rem;
   font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Search — .form-control.search-input beats Bootstrap's .form-control selector */
+.form-control.search-input {
+  width: 220px;
+  background-color: var(--color-bg-2);
+  border-color: var(--color-border);
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.form-control.search-input::placeholder { color: var(--color-text-3); }
+
+.form-control.search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+  background-color: var(--color-bg-2);
   color: var(--color-text);
 }
 
@@ -205,90 +158,41 @@ body {
   color: #fff;
 }
 
-/* Search */
-.search-wrapper {
-  position: relative;
-}
-
-.search-input {
+/* Table card — .card.table-card beats Bootstrap's .card selector */
+.card.table-card {
   background-color: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  font-family: inherit;
-  font-size: 0.875rem;
-  padding: 9px 14px;
-  outline: none;
-  width: 220px;
-  transition: all var(--transition);
-}
-
-.search-input::placeholder {
-  color: var(--color-text-3);
-}
-
-.search-input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-dim);
-}
-
-/* Table */
-.table-section {
-  background-color: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-color: var(--color-border);
   overflow: hidden;
 }
 
-.table-wrapper {
-  overflow-x: auto;
-  position: relative;
-  min-height: 200px;
+/* Table */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: var(--color-bg-3);
+  --bs-table-border-color: var(--color-border);
+  color: var(--color-text-2);
 }
 
-.app-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.app-table thead tr {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.app-table thead th {
-  padding: 12px var(--space-5);
+.table thead th {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  text-align: left;
+  border-bottom-color: var(--color-border);
   white-space: nowrap;
+  padding: 12px 20px;
 }
 
-.app-table tbody tr {
-  border-bottom: 1px solid var(--color-border);
-  transition: background-color var(--transition);
-}
-
-.app-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.app-table tbody tr:hover {
-  background-color: var(--color-bg-3);
-}
-
-.app-table tbody td {
-  padding: 14px var(--space-5);
-  font-size: 0.875rem;
-  color: var(--color-text-2);
+.table tbody td {
+  padding: 14px 20px;
   vertical-align: middle;
 }
 
-.td-company {
+/* .table .td-company beats Bootstrap's .table > :not(caption) > * > * color */
+.table .td-company {
   font-weight: 600;
-  color: var(--color-text) !important;
+  color: var(--color-text);
 }
 
 .td-role {
@@ -314,81 +218,19 @@ body {
   white-space: nowrap;
 }
 
-.status-chip--Wishlist {
-  background-color: rgba(154, 163, 184, 0.12);
-  color: var(--status-wishlist);
-}
-.status-chip--Applied {
-  background-color: rgba(79, 124, 255, 0.15);
-  color: var(--status-applied);
-}
+.status-chip--Wishlist        { background-color: rgba(154,163,184,0.12); color: var(--status-wishlist); }
+.status-chip--Applied         { background-color: rgba(79,124,255,0.15);  color: var(--status-applied); }
 .status-chip--Phone\.Screen,
-.status-chip--Phone {
-  background-color: rgba(167, 139, 250, 0.15);
-  color: var(--status-phone);
-}
+.status-chip--Phone           { background-color: rgba(167,139,250,0.15); color: var(--status-phone); }
 .status-chip--Technical\.Interview,
-.status-chip--Technical {
-  background-color: rgba(245, 197, 66, 0.15);
-  color: var(--status-technical);
-}
+.status-chip--Technical       { background-color: rgba(245,197,66,0.15);  color: var(--status-technical); }
 .status-chip--Final\.Round,
-.status-chip--Final {
-  background-color: rgba(249, 115, 22, 0.15);
-  color: var(--status-final);
-}
-.status-chip--Offer {
-  background-color: rgba(45, 217, 141, 0.15);
-  color: var(--status-offer);
-}
-.status-chip--Rejected {
-  background-color: rgba(255, 92, 92, 0.12);
-  color: var(--status-rejected);
-}
-.status-chip--Withdrawn {
-  background-color: rgba(99, 107, 130, 0.12);
-  color: var(--status-withdrawn);
-}
+.status-chip--Final           { background-color: rgba(249,115,22,0.15);  color: var(--status-final); }
+.status-chip--Offer           { background-color: rgba(45,217,141,0.15);  color: var(--status-offer); }
+.status-chip--Rejected        { background-color: rgba(255,92,92,0.12);   color: var(--status-rejected); }
+.status-chip--Withdrawn       { background-color: rgba(99,107,130,0.12);  color: var(--status-withdrawn); }
 
-/* Table Empty / Loading */
-.table-empty,
-.table-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-12) var(--space-6);
-  text-align: center;
-}
-
-.table-loading {
-  flex-direction: row;
-  gap: var(--space-3);
-  padding: var(--space-10) var(--space-6);
-  color: var(--color-text-3);
-  font-size: 0.875rem;
-}
-
-.empty-icon {
-  font-size: 2.5rem;
-  line-height: 1;
-  color: inherit !important;
-}
-
-.empty-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text-2) !important;
-}
-
-.empty-sub {
-  font-size: 0.875rem;
-  color: var(--color-text-3) !important;
-  max-width: 300px;
-}
-
-/* Action buttons in table */
+/* Table action buttons */
 .td-actions {
   display: flex;
   align-items: center;
@@ -418,135 +260,97 @@ body {
   border-color: var(--color-border-light);
 }
 
+.notes-indicator {
+  font-size: 0.85rem;
+  cursor: default;
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+
+.notes-indicator:hover {
+  opacity: 1;
+}
+
 .btn-icon.delete:hover {
   background-color: rgba(255, 92, 92, 0.1);
   color: var(--color-danger);
   border-color: var(--color-danger);
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: var(--space-5);
-  backdrop-filter: blur(4px);
-}
-
-.modal-card {
-  background-color: var(--color-bg-2);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
+/* Table empty / loading states */
+.table-empty,
+.table-loading {
   display: flex;
   flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-5) var(--space-6);
-  border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  background-color: var(--color-bg-2);
-  z-index: 1;
-}
-
-.modal-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.modal-close {
-  width: 32px;
-  height: 32px;
-  display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-3);
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all var(--transition);
-  flex-shrink: 0;
-}
-
-.modal-close:hover {
-  background-color: var(--color-bg-3);
-  color: var(--color-text);
-}
-
-.modal-body {
-  padding: var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
-
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-6);
-  border-top: 1px solid var(--color-border);
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.table-loading {
+  flex-direction: row;
+  padding: var(--space-10) var(--space-6);
+  color: var(--color-text-3);
+  font-size: 0.875rem;
+}
+
+/* .table-empty .empty-* beats Bootstrap's p selector */
+.table-empty .empty-icon  { font-size: 2.5rem; line-height: 1; color: inherit; }
+.table-empty .empty-title { font-size: 1rem; font-weight: 600; color: var(--color-text-2); }
+.table-empty .empty-sub   { font-size: 0.875rem; color: var(--color-text-3); max-width: 300px; }
+
+/* Modal overrides */
+.app-modal-content {
+  background-color: var(--color-bg-2);
+  border-color: var(--color-border-light);
+}
+
+.app-modal-content .modal-header {
+  border-bottom-color: var(--color-border);
+}
+
+.app-modal-content .modal-footer {
+  border-top-color: var(--color-border);
+}
+
+.app-modal-content .form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-2);
+}
+
+/* .app-modal-content .form-control beats Bootstrap's .form-control selector */
+.app-modal-content .form-control,
+.app-modal-content .form-select {
+  background-color: var(--color-bg-3);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.app-modal-content .form-control::placeholder { color: var(--color-text-3); }
+
+.app-modal-content .form-control:focus,
+.app-modal-content .form-select:focus {
+  background-color: var(--color-bg-3);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+}
+
+.app-modal-content .form-select option {
+  background-color: var(--color-bg-3);
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .pipeline-controls {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .controls-right {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .search-input {
-    width: 100%;
-    flex: 1;
-  }
-}
-
-@media (max-width: 640px) {
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .nav-inner {
-    padding: 0 var(--space-4);
-  }
-
+@media (max-width: 768px) {
   .dashboard-main {
     padding: var(--space-5) var(--space-4);
+  }
+
+  .form-control.search-input {
+    width: 100%;
+    flex: 1;
   }
 }

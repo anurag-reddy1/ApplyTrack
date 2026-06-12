@@ -4,6 +4,8 @@
  * Handles: application listing, filtering, search, CRUD modal, metrics display.
  */
 
+/* global bootstrap */
+
 import {
   getApplications,
   getMetrics,
@@ -38,6 +40,7 @@ let editingId = null; // null = create mode, string = edit mode
 
 // Init
 const init = async () => {
+  bsModal = new bootstrap.Modal($("app-modal"));
   $("nav-username").textContent = username;
   await Promise.all([loadApplications(), loadMetrics()]);
 };
@@ -119,12 +122,29 @@ const renderTable = () => {
       handleDelete(app._id, app.company)
     );
   });
+
+  // Initialize Bootstrap tooltips for notes indicators
+  document.querySelectorAll(".notes-indicator").forEach((el) => {
+    new bootstrap.Tooltip(el);
+  });
 };
 
 const buildRow = (app) => {
-  const jobLinkHtml = app.jobLink
-    ? `<a href="${escapeHtml(app.jobLink)}" target="_blank" rel="noopener noreferrer" title="Open job posting">↗</a>`
-    : "—";
+  let jobLinkHtml = "—";
+  if (app.jobLink) {
+    const href = /^https?:\/\//i.test(app.jobLink)
+      ? app.jobLink
+      : `https://${app.jobLink}`;
+    jobLinkHtml = `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="Open job posting">↗</a>`;
+  }
+
+  const notesHtml = app.notes
+    ? `<span class="notes-indicator"
+         data-bs-toggle="tooltip"
+         data-bs-placement="left"
+         data-bs-title="${escapeHtml(app.notes)}"
+         aria-label="Notes: ${escapeHtml(app.notes)}">📝</span>`
+    : "";
 
   return `
     <tr>
@@ -137,6 +157,7 @@ const buildRow = (app) => {
         <button type="button" class="btn-icon" data-edit="${app._id}" aria-label="Edit ${escapeHtml(app.company)}">✏️</button>
         <button type="button" class="btn-icon delete" data-delete="${app._id}" aria-label="Delete ${escapeHtml(app.company)}">🗑️</button>
         <span class="td-link">${jobLinkHtml}</span>
+        ${notesHtml}
       </td>
     </tr>
   `;
@@ -175,6 +196,19 @@ $("search-input").addEventListener("input", (e) => {
 // Add Button
 $("add-app-btn").addEventListener("click", () => openCreateModal());
 
+// Bootstrap Modal instance — initialized in init() once Bootstrap is ready
+let bsModal;
+
+// Focus company field after modal animation completes
+$("app-modal").addEventListener("shown.bs.modal", () => {
+  $("field-company").focus();
+});
+
+// Reset editing state when modal is fully hidden
+$("app-modal").addEventListener("hidden.bs.modal", () => {
+  editingId = null;
+});
+
 // Modal Logic
 const openCreateModal = () => {
   editingId = null;
@@ -182,9 +216,7 @@ const openCreateModal = () => {
   $("modal-submit-btn").textContent = "Save Application";
   $("app-form").reset();
   clearError("modal-error");
-  hide($("app-id"));
-  show($("app-modal"));
-  $("field-company").focus();
+  bsModal.show();
 };
 
 const openEditModal = (app) => {
@@ -203,29 +235,12 @@ const openEditModal = (app) => {
   $("field-job-link").value = app.jobLink ?? "";
   $("field-notes").value = app.notes ?? "";
 
-  show($("app-modal"));
-  $("field-company").focus();
+  bsModal.show();
 };
 
 const closeModal = () => {
-  hide($("app-modal"));
-  editingId = null;
+  bsModal.hide();
 };
-
-$("modal-close-btn").addEventListener("click", closeModal);
-$("modal-cancel-btn").addEventListener("click", closeModal);
-
-// Close on overlay click
-$("app-modal").addEventListener("click", (e) => {
-  if (e.target === $("app-modal")) closeModal();
-});
-
-// Close on Escape key
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !$("app-modal").classList.contains("hidden")) {
-    closeModal();
-  }
-});
 
 // Form Submit (Create / Update)
 $("app-form").addEventListener("submit", async (e) => {

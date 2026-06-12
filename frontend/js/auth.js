@@ -18,14 +18,14 @@ const loginSection = $("login-section");
 const registerSection = $("register-section");
 
 $("show-register").addEventListener("click", () => {
-  loginSection.classList.add("hidden");
-  registerSection.classList.remove("hidden");
+  loginSection.classList.add("d-none");
+  registerSection.classList.remove("d-none");
   clearError("register-error");
 });
 
 $("show-login").addEventListener("click", () => {
-  registerSection.classList.add("hidden");
-  loginSection.classList.remove("hidden");
+  registerSection.classList.add("d-none");
+  loginSection.classList.remove("d-none");
   clearError("login-error");
 });
 
