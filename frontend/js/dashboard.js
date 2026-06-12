@@ -1,7 +1,7 @@
 /**
  * dashboard.js
  * Entry script for the pipeline dashboard page.
- * Handles: application listing, filtering, search, CRUD modal, metrics display.
+ * Handles: application listing, filtering, search, sorting, pagination, CRUD modal, metrics display.
  */
 
 /* global bootstrap */
@@ -33,12 +33,17 @@ if (!session) throw new Error("Not authenticated.");
 const { userId, username } = session;
 
 // State
-let allApplications = []; // full list from server
-let activeStatus = "all"; // current filter tab
-let searchQuery = ""; // current search string
-let editingId = null; // null = create mode, string = edit mode
-let sortColumn = "appliedDate"; // default sort
-let sortDirection = "desc"; // "asc" | "desc"
+let allApplications = []; // current page of results from server
+let activeStatus = "all";
+let searchQuery = "";
+let editingId = null;
+let sortColumn = "appliedDate";
+let sortDirection = "desc";
+let currentPage = 1;
+let totalPages = 1;
+let totalCount = 0;
+
+const PAGE_SIZE = 20;
 
 // Init
 const init = async () => {
@@ -53,14 +58,27 @@ $("logout-btn").addEventListener("click", () => {
   window.location.href = "/";
 });
 
-// Load & Render Applications
+// Load applications from server with current state (filter, search, sort, page)
 const loadApplications = async () => {
   show($("table-loading"));
   hide($("table-empty"));
 
   try {
-    allApplications = await getApplications(userId);
+    const result = await getApplications(userId, {
+      status: activeStatus,
+      search: searchQuery,
+      page: currentPage,
+      limit: PAGE_SIZE,
+      sortBy: sortColumn,
+      sortDir: sortDirection,
+    });
+
+    allApplications = result.data;
+    totalCount = result.total;
+    totalPages = result.totalPages;
+
     renderTable();
+    renderPagination();
   } catch (err) {
     showToast("Failed to load applications. " + err.message, "error");
   } finally {
@@ -83,48 +101,12 @@ const loadMetrics = async () => {
   }
 };
 
-// Render Table
+// Render Table — server has already filtered/sorted; just render the current page
 const renderTable = () => {
   const tbody = $("app-table-body");
   const empty = $("table-empty");
 
-  // Filter by status tab
-  let filtered =
-    activeStatus === "all"
-      ? allApplications
-      : allApplications.filter((a) => a.status === activeStatus);
-
-  // Filter by search query
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(
-      (a) =>
-        a.company.toLowerCase().includes(q) || a.role.toLowerCase().includes(q)
-    );
-  }
-
-  // Sort
-  filtered = [...filtered].sort((a, b) => {
-    let aVal = a[sortColumn] ?? "";
-    let bVal = b[sortColumn] ?? "";
-
-    if (sortColumn === "appliedDate") {
-      aVal = aVal ? new Date(aVal).getTime() : 0;
-      bVal = bVal ? new Date(bVal).getTime() : 0;
-    } else if (sortColumn === "salary") {
-      aVal = parseSalary(aVal);
-      bVal = parseSalary(bVal);
-    } else {
-      aVal = String(aVal).toLowerCase();
-      bVal = String(bVal).toLowerCase();
-    }
-
-    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
-    return 0;
-  });
-
-  // Update header sort indicators
+  // Update sort header indicators
   document.querySelectorAll(".sortable").forEach((th) => {
     th.setAttribute("aria-sort", "none");
     th.querySelector(".sort-icon").textContent = "↕";
@@ -141,32 +123,96 @@ const renderTable = () => {
       sortDirection === "asc" ? "↑" : "↓";
   }
 
-  if (filtered.length === 0) {
+  if (allApplications.length === 0) {
     tbody.innerHTML = "";
     show(empty);
     return;
   }
 
   hide(empty);
+  tbody.innerHTML = allApplications.map((app) => buildRow(app)).join("");
 
-  // Build rows using client-side rendering.
-  tbody.innerHTML = filtered.map((app) => buildRow(app)).join("");
-
-  // Attach row action listeners
-  filtered.forEach((app) => {
-    const editBtn = document.querySelector(`[data-edit="${app._id}"]`);
-    const deleteBtn = document.querySelector(`[data-delete="${app._id}"]`);
-
-    editBtn?.addEventListener("click", () => openEditModal(app));
-    deleteBtn?.addEventListener("click", () =>
-      handleDelete(app._id, app.company)
-    );
+  allApplications.forEach((app) => {
+    document
+      .querySelector(`[data-edit="${app._id}"]`)
+      ?.addEventListener("click", () => openEditModal(app));
+    document
+      .querySelector(`[data-delete="${app._id}"]`)
+      ?.addEventListener("click", () => handleDelete(app._id, app.company));
   });
 
-  // Initialize Bootstrap tooltips for notes indicators
   document.querySelectorAll(".notes-indicator").forEach((el) => {
     new bootstrap.Tooltip(el);
   });
+};
+
+// Render pagination controls
+const renderPagination = () => {
+  const nav = $("pagination-nav");
+  if (!nav) return;
+
+  // Hide pagination when everything fits on one page
+  if (totalPages <= 1) {
+    nav.innerHTML = "";
+    return;
+  }
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, totalCount);
+
+  // Build page number buttons with ellipsis
+  const pages = buildPageRange(currentPage, totalPages);
+  const pageButtons = pages
+    .map((p) =>
+      p === "..."
+        ? `<li class="page-item disabled"><span class="page-link">…</span></li>`
+        : `<li class="page-item ${p === currentPage ? "active" : ""}">
+             <button class="page-link" data-page="${p}">${p}</button>
+           </li>`
+    )
+    .join("");
+
+  nav.innerHTML = `
+    <div class="pagination-info">Showing ${start}–${end} of ${totalCount}</div>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+        <button class="page-link" data-page="${currentPage - 1}">‹ Prev</button>
+      </li>
+      ${pageButtons}
+      <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
+        <button class="page-link" data-page="${currentPage + 1}">Next ›</button>
+      </li>
+    </ul>
+  `;
+
+  nav.querySelectorAll("[data-page]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const page = parseInt(btn.dataset.page);
+      if (page >= 1 && page <= totalPages && page !== currentPage) {
+        currentPage = page;
+        loadApplications();
+      }
+    });
+  });
+};
+
+// Returns an array of page numbers and "..." for ellipsis
+const buildPageRange = (current, total) => {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages = [];
+  const delta = 2;
+  const left = current - delta;
+  const right = current + delta;
+
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= left && i <= right)) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== "...") {
+      pages.push("...");
+    }
+  }
+  return pages;
 };
 
 const buildRow = (app) => {
@@ -203,15 +249,6 @@ const buildRow = (app) => {
   `;
 };
 
-/** Extracts a numeric value from salary strings like "$85,000" or "$35/hr" for sorting. Returns 0 if unparseable. */
-const parseSalary = (str) => {
-  if (!str) return 0;
-  const num = parseFloat(String(str).replace(/[^0-9.]/g, ""));
-  if (isNaN(num)) return 0;
-  // Normalize hourly to annual so "$35/hr" sorts correctly against "$85,000"
-  return /hr/i.test(str) ? num * 2080 : num;
-};
-
 /** Simple HTML escape to prevent XSS from user data */
 const escapeHtml = (str) =>
   String(str)
@@ -233,7 +270,8 @@ $("filter-tabs").addEventListener("click", (e) => {
   tab.classList.add("active");
   tab.setAttribute("aria-selected", "true");
   activeStatus = tab.dataset.status;
-  renderTable();
+  currentPage = 1;
+  loadApplications();
 });
 
 // Column Sorting
@@ -247,13 +285,19 @@ document.querySelector("#app-table thead").addEventListener("click", (e) => {
     sortColumn = col;
     sortDirection = "asc";
   }
-  renderTable();
+  currentPage = 1;
+  loadApplications();
 });
 
-// Search
+// Search — debounced to avoid a request on every keystroke
+let searchTimer = null;
 $("search-input").addEventListener("input", (e) => {
-  searchQuery = e.target.value.trim();
-  renderTable();
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchQuery = e.target.value.trim();
+    currentPage = 1;
+    loadApplications();
+  }, 300);
 });
 
 // Add Button
@@ -262,12 +306,10 @@ $("add-app-btn").addEventListener("click", () => openCreateModal());
 // Bootstrap Modal instance — initialized in init() once Bootstrap is ready
 let bsModal;
 
-// Focus company field after modal animation completes
 $("app-modal").addEventListener("shown.bs.modal", () => {
   $("field-company").focus();
 });
 
-// Reset editing state when modal is fully hidden
 $("app-modal").addEventListener("hidden.bs.modal", () => {
   editingId = null;
 });
@@ -288,7 +330,6 @@ const openEditModal = (app) => {
   $("modal-submit-btn").textContent = "Update Application";
   clearError("modal-error");
 
-  // Populate form fields
   $("app-id").value = app._id;
   $("field-company").value = app.company ?? "";
   $("field-role").value = app.role ?? "";
@@ -301,9 +342,7 @@ const openEditModal = (app) => {
   bsModal.show();
 };
 
-const closeModal = () => {
-  bsModal.hide();
-};
+const closeModal = () => bsModal.hide();
 
 // Form Submit (Create / Update)
 $("app-form").addEventListener("submit", async (e) => {
@@ -363,6 +402,8 @@ const handleDelete = async (id, companyName) => {
   try {
     await deleteApplication(id);
     showToast(`Deleted ${companyName}.`, "success");
+    // If we just deleted the last item on a non-first page, go back one page
+    if (allApplications.length === 1 && currentPage > 1) currentPage--;
     await Promise.all([loadApplications(), loadMetrics()]);
   } catch (err) {
     showToast("Failed to delete: " + err.message, "error");
