@@ -173,6 +173,27 @@ body {
   color: var(--color-text-2);
 }
 
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  color: var(--color-text-2);
+}
+
+.sort-icon {
+  font-size: 0.65rem;
+  margin-left: 4px;
+  opacity: 0.5;
+}
+
+.sortable:hover .sort-icon,
+.sortable[aria-sort="ascending"] .sort-icon,
+.sortable[aria-sort="descending"] .sort-icon {
+  opacity: 1;
+}
+
 .table thead th {
   font-size: 0.75rem;
   font-weight: 600;
