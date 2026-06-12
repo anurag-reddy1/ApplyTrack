@@ -37,6 +37,8 @@ let allApplications = []; // full list from server
 let activeStatus = "all"; // current filter tab
 let searchQuery = ""; // current search string
 let editingId = null; // null = create mode, string = edit mode
+let sortColumn = "appliedDate"; // default sort
+let sortDirection = "desc"; // "asc" | "desc"
 
 // Init
 const init = async () => {
@@ -101,6 +103,44 @@ const renderTable = () => {
     );
   }
 
+  // Sort
+  filtered = [...filtered].sort((a, b) => {
+    let aVal = a[sortColumn] ?? "";
+    let bVal = b[sortColumn] ?? "";
+
+    if (sortColumn === "appliedDate") {
+      aVal = aVal ? new Date(aVal).getTime() : 0;
+      bVal = bVal ? new Date(bVal).getTime() : 0;
+    } else if (sortColumn === "salary") {
+      aVal = parseSalary(aVal);
+      bVal = parseSalary(bVal);
+    } else {
+      aVal = String(aVal).toLowerCase();
+      bVal = String(bVal).toLowerCase();
+    }
+
+    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  // Update header sort indicators
+  document.querySelectorAll(".sortable").forEach((th) => {
+    th.setAttribute("aria-sort", "none");
+    th.querySelector(".sort-icon").textContent = "↕";
+  });
+  const activeHeader = document.querySelector(
+    `.sortable[data-col="${sortColumn}"]`
+  );
+  if (activeHeader) {
+    activeHeader.setAttribute(
+      "aria-sort",
+      sortDirection === "asc" ? "ascending" : "descending"
+    );
+    activeHeader.querySelector(".sort-icon").textContent =
+      sortDirection === "asc" ? "↑" : "↓";
+  }
+
   if (filtered.length === 0) {
     tbody.innerHTML = "";
     show(empty);
@@ -163,6 +203,15 @@ const buildRow = (app) => {
   `;
 };
 
+/** Extracts a numeric value from salary strings like "$85,000" or "$35/hr" for sorting. Returns 0 if unparseable. */
+const parseSalary = (str) => {
+  if (!str) return 0;
+  const num = parseFloat(String(str).replace(/[^0-9.]/g, ""));
+  if (isNaN(num)) return 0;
+  // Normalize hourly to annual so "$35/hr" sorts correctly against "$85,000"
+  return /hr/i.test(str) ? num * 2080 : num;
+};
+
 /** Simple HTML escape to prevent XSS from user data */
 const escapeHtml = (str) =>
   String(str)
@@ -184,6 +233,20 @@ $("filter-tabs").addEventListener("click", (e) => {
   tab.classList.add("active");
   tab.setAttribute("aria-selected", "true");
   activeStatus = tab.dataset.status;
+  renderTable();
+});
+
+// Column Sorting
+document.querySelector("#app-table thead").addEventListener("click", (e) => {
+  const th = e.target.closest(".sortable");
+  if (!th) return;
+  const col = th.dataset.col;
+  if (sortColumn === col) {
+    sortDirection = sortDirection === "asc" ? "desc" : "asc";
+  } else {
+    sortColumn = col;
+    sortDirection = "asc";
+  }
   renderTable();
 });
 
