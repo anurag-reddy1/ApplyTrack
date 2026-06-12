@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApplyTrack — Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🎯</text></svg>" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <header class="nav-header">
+      <div class="nav-inner">
+        <a href="dashboard.html" class="nav-brand">
+          <span>🎯</span>
+          <span>ApplyTrack</span>
+        </a>
+        <nav class="nav-links">
+          <a href="dashboard.html" class="nav-link active">Pipeline</a>
+        </nav>
+        <div class="nav-user">
+          <span class="nav-username" id="nav-username">Loading...</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="logout-btn">Sign Out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <!-- Metrics Bar -->
+      <section class="metrics-section" aria-label="Application Metrics">
+        <div class="metrics-grid">
+          <div class="metric-card" id="metric-total">
+            <span class="metric-value">—</span>
+            <span class="metric-label">Total Applied</span>
+          </div>
+          <div class="metric-card" id="metric-interviews">
+            <span class="metric-value">—</span>
+            <span class="metric-label">In Interview</span>
+          </div>
+          <div class="metric-card" id="metric-offers">
+            <span class="metric-value">—</span>
+            <span class="metric-label">Offers</span>
+          </div>
+          <div class="metric-card" id="metric-rate">
+            <span class="metric-value">—</span>
+            <span class="metric-label">Response Rate</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pipeline Controls -->
+      <section class="pipeline-controls">
+        <div class="controls-left">
+          <h2 class="section-title">My Pipeline</h2>
+          <div class="filter-tabs" id="filter-tabs" role="tablist" aria-label="Filter by status">
+            <button type="button" class="filter-tab active" data-status="all" role="tab" aria-selected="true">All</button>
+            <button type="button" class="filter-tab" data-status="Wishlist" role="tab" aria-selected="false">Wishlist</button>
+            <button type="button" class="filter-tab" data-status="Applied" role="tab" aria-selected="false">Applied</button>
+            <button type="button" class="filter-tab" data-status="Phone Screen" role="tab" aria-selected="false">Phone Screen</button>
+            <button type="button" class="filter-tab" data-status="Technical Interview" role="tab" aria-selected="false">Technical</button>
+            <button type="button" class="filter-tab" data-status="Final Round" role="tab" aria-selected="false">Final Round</button>
+            <button type="button" class="filter-tab" data-status="Offer" role="tab" aria-selected="false">Offer</button>
+            <button type="button" class="filter-tab" data-status="Rejected" role="tab" aria-selected="false">Rejected</button>
+          </div>
+        </div>
+        <div class="controls-right">
+          <div class="search-wrapper">
+            <input
+              type="search"
+              id="search-input"
+              class="search-input"
+              placeholder="Search company or role…"
+              aria-label="Search applications"
+            />
+          </div>
+          <button type="button" class="btn btn-primary" id="add-app-btn">
+            + Add Application
+          </button>
+        </div>
+      </section>
+
+      <!-- Applications Table -->
+      <section class="table-section" aria-label="Applications list">
+        <div class="table-wrapper">
+          <table class="app-table" id="app-table">
+            <thead>
+              <tr>
+                <th scope="col">Company</th>
+                <th scope="col">Role</th>
+                <th scope="col">Status</th>
+                <th scope="col">Salary</th>
+                <th scope="col">Applied</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="app-table-body">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+          <div class="table-empty hidden" id="table-empty">
+            <p class="empty-icon">📋</p>
+            <p class="empty-title">No applications yet</p>
+            <p class="empty-sub">Click <strong>+ Add Application</strong> to start tracking your pipeline.</p>
+          </div>
+          <div class="table-loading" id="table-loading" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Loading applications…</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Application Modal -->
+    <div class="modal-overlay hidden" id="app-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title" id="modal-title">Add Application</h3>
+          <button type="button" class="modal-close" id="modal-close-btn" aria-label="Close modal">✕</button>
+        </div>
+        <form id="app-form" novalidate>
+          <input type="hidden" id="app-id" />
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="field-company">Company <span class="required">*</span></label>
+                <input type="text" id="field-company" name="company" placeholder="e.g. Google" required />
+              </div>
+              <div class="form-group">
+                <label for="field-role">Role <span class="required">*</span></label>
+                <input type="text" id="field-role" name="role" placeholder="e.g. Software Engineer Intern" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="field-status">Status</label>
+                <select id="field-status" name="status">
+                  <option value="Wishlist">Wishlist</option>
+                  <option value="Applied">Applied</option>
+                  <option value="Phone Screen">Phone Screen</option>
+                  <option value="Technical Interview">Technical Interview</option>
+                  <option value="Final Round">Final Round</option>
+                  <option value="Offer">Offer</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Withdrawn">Withdrawn</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="field-salary">Salary / Hourly</label>
+                <input type="text" id="field-salary" name="salary" placeholder="e.g. $85,000 or $35/hr" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="field-applied-date">Date Applied</label>
+                <input type="date" id="field-applied-date" name="appliedDate" />
+              </div>
+              <div class="form-group">
+                <label for="field-job-link">Job Posting URL</label>
+                <input type="url" id="field-job-link" name="jobLink" placeholder="https://…" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="field-notes">Notes</label>
+              <textarea id="field-notes" name="notes" rows="3" placeholder="Recruiter name, referral, key details…"></textarea>
+            </div>
+          </div>
+          <div class="form-error" id="modal-error" aria-live="polite"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" id="modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="modal-submit-btn">Save Application</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast hidden" id="toast" role="alert" aria-live="assertive"></div>
+
+    <script type="module" src="../js/dashboard.js"></script>
+  </body>
+</html>
