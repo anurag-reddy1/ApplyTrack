@@ -16,10 +16,18 @@ const VALID_STATUSES = [
 ];
 
 // GET /api/applications
-// Returns all applications for a user. Supports optional ?status= filter.
+// Returns a paginated, sorted, filtered page of applications for a user.
 router.get("/", async (req, res) => {
   try {
-    const { userId, status } = req.query;
+    const {
+      userId,
+      status,
+      search,
+      page = "1",
+      limit = "20",
+      sortBy = "appliedDate",
+      sortDir = "desc",
+    } = req.query;
 
     if (!userId) {
       return res
@@ -31,15 +39,46 @@ router.get("/", async (req, res) => {
     const applications = db.collection("applications");
 
     const query = { userId };
-    if (status && VALID_STATUSES.includes(status)) {
-      query.status = status;
+    if (status && VALID_STATUSES.includes(status)) query.status = status;
+    if (search) {
+      query.$or = [
+        { company: { $regex: search, $options: "i" } },
+        { role: { $regex: search, $options: "i" } },
+      ];
     }
 
-    const docs = await applications
-      .find(query)
-      .sort({ updatedAt: -1 })
-      .toArray();
-    return res.status(200).json(docs);
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const SORTABLE_FIELDS = [
+      "company",
+      "role",
+      "status",
+      "salary",
+      "appliedDate",
+      "updatedAt",
+    ];
+    const sortField = SORTABLE_FIELDS.includes(sortBy) ? sortBy : "appliedDate";
+    const sortOrder = sortDir === "asc" ? 1 : -1;
+
+    const [docs, total] = await Promise.all([
+      applications
+        .find(query)
+        .sort({ [sortField]: sortOrder })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray(),
+      applications.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      data: docs,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (err) {
     console.error("GET /applications error:", err);
     return res.status(500).json({ error: "Internal server error." });

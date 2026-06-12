@@ -46,9 +46,17 @@ export const register = (username, email, password) =>
 
 // Applications
 
-export const getApplications = (userId, status = null) => {
+export const getApplications = (
+  userId,
+  { status, search, page, limit, sortBy, sortDir } = {}
+) => {
   const params = new URLSearchParams({ userId });
   if (status && status !== "all") params.append("status", status);
+  if (search) params.append("search", search);
+  if (page) params.append("page", page);
+  if (limit) params.append("limit", limit);
+  if (sortBy) params.append("sortBy", sortBy);
+  if (sortDir) params.append("sortDir", sortDir);
   return request(`/applications?${params}`);
 };
 

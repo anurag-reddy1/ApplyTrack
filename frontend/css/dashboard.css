@@ -364,6 +364,44 @@ body {
   background-color: var(--color-bg-3);
 }
 
+/* Pagination */
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pagination-info {
+  font-size: 0.825rem;
+  color: var(--color-text-3);
+}
+
+.pagination .page-link {
+  background-color: var(--color-bg-2);
+  border-color: var(--color-border);
+  color: var(--color-text-2);
+}
+
+.pagination .page-link:hover {
+  background-color: var(--color-bg-3);
+  border-color: var(--color-border-light);
+  color: var(--color-text);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+  background-color: var(--color-bg-2);
+  border-color: var(--color-border);
+  color: var(--color-text-3);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .dashboard-main {
