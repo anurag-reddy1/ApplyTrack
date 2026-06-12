@@ -122,6 +122,11 @@ const renderTable = () => {
       handleDelete(app._id, app.company)
     );
   });
+
+  // Initialize Bootstrap tooltips for notes indicators
+  document.querySelectorAll(".notes-indicator").forEach((el) => {
+    new bootstrap.Tooltip(el);
+  });
 };
 
 const buildRow = (app) => {
@@ -132,6 +137,14 @@ const buildRow = (app) => {
       : `https://${app.jobLink}`;
     jobLinkHtml = `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="Open job posting">↗</a>`;
   }
+
+  const notesHtml = app.notes
+    ? `<span class="notes-indicator"
+         data-bs-toggle="tooltip"
+         data-bs-placement="left"
+         data-bs-title="${escapeHtml(app.notes)}"
+         aria-label="Notes: ${escapeHtml(app.notes)}">📝</span>`
+    : "";
 
   return `
     <tr>
@@ -144,6 +157,7 @@ const buildRow = (app) => {
         <button type="button" class="btn-icon" data-edit="${app._id}" aria-label="Edit ${escapeHtml(app.company)}">✏️</button>
         <button type="button" class="btn-icon delete" data-delete="${app._id}" aria-label="Delete ${escapeHtml(app.company)}">🗑️</button>
         <span class="td-link">${jobLinkHtml}</span>
+        ${notesHtml}
       </td>
     </tr>
   `;

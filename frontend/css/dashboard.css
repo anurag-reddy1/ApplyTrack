@@ -260,6 +260,17 @@ body {
   border-color: var(--color-border-light);
 }
 
+.notes-indicator {
+  font-size: 0.85rem;
+  cursor: default;
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+
+.notes-indicator:hover {
+  opacity: 1;
+}
+
 .btn-icon.delete:hover {
   background-color: rgba(255, 92, 92, 0.1);
   color: var(--color-danger);
