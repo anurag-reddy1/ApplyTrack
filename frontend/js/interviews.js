@@ -1,49 +1,322 @@
-import { ObjectId } from 'mongodb';
-import { getDB } from '../config/db.js';
+const API = '/api/interviews';
 
-const COLLECTION = 'interviews';
+// ─── Auth guard (matches Anurag's pattern) ────────────────────────────────────
+const token = localStorage.getItem('token');
+const user = JSON.parse(localStorage.getItem('user') || 'null');
 
-export async function getAllInterviews() {
-  const db = getDB();
-  return db.collection(COLLECTION).find({}).sort({ date: 1 }).toArray();
+if (!token) {
+  window.location.href = '../index.html';
 }
 
-export async function getInterviewById(id) {
-  const db = getDB();
-  return db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
+// Show username in nav
+const navUsername = document.getElementById('nav-username');
+if (navUsername && user) {
+  navUsername.textContent = user.name || user.email?.split('@')[0] || '';
 }
 
-export async function createInterview(data) {
-  const db = getDB();
-  const doc = {
-    company: data.company,
-    role: data.role,
-    round: data.round,
-    date: data.date ? new Date(data.date) : null,
-    status: data.status || 'Upcoming',
-    interviewerName: data.interviewerName || '',
-    techNotes: data.techNotes || '',
-    behavioralNotes: data.behavioralNotes || '',
-    result: data.result || 'Pending',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+document.getElementById('sign-out-btn').addEventListener('click', () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = '../index.html';
+});
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let interviews = [];
+let editingId = null;
+let activeFilter = '';
+
+// ─── DOM refs ────────────────────────────────────────────────────────────────
+const tbody = document.getElementById('interviews-tbody');
+const overlay = document.getElementById('modal-overlay');
+const modalTitle = document.getElementById('modal-title');
+const formError = document.getElementById('form-error');
+const searchInput = document.getElementById('search-input');
+const notesPanel = document.getElementById('notes-panel');
+const panelTitle = document.getElementById('panel-title');
+const panelBody = document.getElementById('panel-body');
+
+const fields = {
+  company: document.getElementById('f-company'),
+  role: document.getElementById('f-role'),
+  round: document.getElementById('f-round'),
+  date: document.getElementById('f-date'),
+  status: document.getElementById('f-status'),
+  result: document.getElementById('f-result'),
+  interviewer: document.getElementById('f-interviewer'),
+  tech: document.getElementById('f-tech'),
+  behavioral: document.getElementById('f-behavioral'),
+};
+
+// ─── API helpers ─────────────────────────────────────────────────────────────
+const authHeader = () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${token}`,
+});
+
+async function fetchAll() {
+  const res = await fetch(API, { headers: authHeader() });
+  if (!res.ok) throw new Error('Failed to load');
+  return res.json();
+}
+
+async function createOne(data) {
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: authHeader(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const { error } = await res.json();
+    throw new Error(error || 'Failed to create');
+  }
+  return res.json();
+}
+
+async function updateOne(id, data) {
+  const res = await fetch(`${API}/${id}`, {
+    method: 'PUT',
+    headers: authHeader(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const { error } = await res.json();
+    throw new Error(error || 'Failed to update');
+  }
+  return res.json();
+}
+
+async function deleteOne(id) {
+  const res = await fetch(`${API}/${id}`, {
+    method: 'DELETE',
+    headers: authHeader(),
+  });
+  if (!res.ok) throw new Error('Failed to delete');
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function statusBadge(status) {
+  const map = {
+    Upcoming: 'badge--blue',
+    Completed: 'badge--green',
+    Cancelled: 'badge--grey',
   };
-  const result = await db.collection(COLLECTION).insertOne(doc);
-  return { _id: result.insertedId, ...doc };
+  return `<span class="badge ${map[status] ?? 'badge--grey'}">${status}</span>`;
 }
 
-export async function updateInterview(id, data) {
-  const db = getDB();
-  const updates = { ...data, updatedAt: new Date() };
-  if (data.date) updates.date = new Date(data.date);
-  delete updates._id;
-  await db
-    .collection(COLLECTION)
-    .updateOne({ _id: new ObjectId(id) }, { $set: updates });
-  return getInterviewById(id);
+function resultBadge(result) {
+  const map = { Pass: 'badge--green', Fail: 'badge--red', Pending: 'badge--yellow' };
+  return `<span class="badge ${map[result] ?? 'badge--yellow'}">${result}</span>`;
 }
 
-export async function deleteInterview(id) {
-  const db = getDB();
-  return db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
+function fmtDate(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderTable() {
+  const query = searchInput.value.toLowerCase();
+
+  const filtered = interviews.filter((iv) => {
+    if (activeFilter && iv.status !== activeFilter) return false;
+    if (query) {
+      return (
+        iv.company.toLowerCase().includes(query) ||
+        iv.role.toLowerCase().includes(query)
+      );
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No interviews found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered
+    .map(
+      (iv) => `
+      <tr class="clickable" data-id="${iv._id}">
+        <td><strong>${iv.company}</strong></td>
+        <td>${iv.role}</td>
+        <td><span class="round-tag">${iv.round}</span></td>
+        <td>${statusBadge(iv.status)}</td>
+        <td class="date-col">${fmtDate(iv.date)}</td>
+        <td>${resultBadge(iv.result)}</td>
+        <td>
+          <div class="actions-cell">
+            <button class="action-icon edit-btn" data-id="${iv._id}" title="Edit">✏️</button>
+            <button class="action-icon action-icon--delete delete-btn" data-id="${iv._id}" title="Delete">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `,
+    )
+    .join('');
+
+  // Row click → open notes panel
+  tbody.querySelectorAll('tr.clickable').forEach((row) => {
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.actions-cell')) return;
+      openNotesPanel(row.dataset.id);
+    });
+  });
+
+  tbody.querySelectorAll('.edit-btn').forEach((btn) =>
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEdit(btn.dataset.id);
+    }),
+  );
+
+  tbody.querySelectorAll('.delete-btn').forEach((btn) =>
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleDelete(btn.dataset.id);
+    }),
+  );
+}
+
+// ─── Notes Panel ─────────────────────────────────────────────────────────────
+function openNotesPanel(id) {
+  const iv = interviews.find((x) => String(x._id) === id);
+  if (!iv) return;
+  panelTitle.textContent = `${iv.company} — ${iv.round}`;
+  panelBody.innerHTML = `
+    <div class="notes-section">
+      <h4>Technical Prep Notes</h4>
+      <p class="${iv.techNotes ? '' : 'empty'}">${iv.techNotes || 'No notes added yet.'}</p>
+    </div>
+    <div class="notes-section">
+      <h4>Behavioral Prep Notes</h4>
+      <p class="${iv.behavioralNotes ? '' : 'empty'}">${iv.behavioralNotes || 'No notes added yet.'}</p>
+    </div>
+    ${iv.interviewerName ? `<div class="notes-section"><h4>Interviewer</h4><p>${iv.interviewerName}</p></div>` : ''}
+  `;
+  notesPanel.hidden = false;
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function openModal(title) {
+  modalTitle.textContent = title;
+  formError.hidden = true;
+  overlay.hidden = false;
+}
+
+function closeModal() {
+  overlay.hidden = true;
+  editingId = null;
+  Object.values(fields).forEach((el) => (el.value = ''));
+}
+
+function openAdd() {
+  editingId = null;
+  openModal('Add Interview');
+}
+
+function openEdit(id) {
+  const iv = interviews.find((x) => String(x._id) === id);
+  if (!iv) return;
+  editingId = id;
+  fields.company.value = iv.company;
+  fields.role.value = iv.role;
+  fields.round.value = iv.round;
+  fields.date.value = iv.date ? new Date(iv.date).toISOString().slice(0, 16) : '';
+  fields.status.value = iv.status;
+  fields.result.value = iv.result;
+  fields.interviewer.value = iv.interviewerName || '';
+  fields.tech.value = iv.techNotes || '';
+  fields.behavioral.value = iv.behavioralNotes || '';
+  openModal('Edit Interview');
+}
+
+function getFormData() {
+  return {
+    company: fields.company.value.trim(),
+    role: fields.role.value.trim(),
+    round: fields.round.value,
+    date: fields.date.value || null,
+    status: fields.status.value,
+    result: fields.result.value,
+    interviewerName: fields.interviewer.value.trim(),
+    techNotes: fields.tech.value.trim(),
+    behavioralNotes: fields.behavioral.value.trim(),
+  };
+}
+
+// ─── Handlers ─────────────────────────────────────────────────────────────────
+async function handleSave() {
+  const data = getFormData();
+  if (!data.company || !data.role) {
+    formError.textContent = 'Company and Role are required.';
+    formError.hidden = false;
+    return;
+  }
+  try {
+    if (editingId) {
+      const updated = await updateOne(editingId, data);
+      interviews = interviews.map((iv) => (String(iv._id) === editingId ? updated : iv));
+    } else {
+      const created = await createOne(data);
+      interviews.unshift(created);
+    }
+    closeModal();
+    renderTable();
+  } catch (err) {
+    formError.textContent = err.message;
+    formError.hidden = false;
+  }
+}
+
+async function handleDelete(id) {
+  if (!confirm('Delete this interview record?')) return;
+  try {
+    await deleteOne(id);
+    interviews = interviews.filter((iv) => String(iv._id) !== id);
+    renderTable();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    interviews = await fetchAll();
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-row" style="color:var(--red)">Could not connect to server.</td></tr>`;
+    return;
+  }
+  renderTable();
+}
+
+// ─── Event listeners ──────────────────────────────────────────────────────────
+document.getElementById('add-btn').addEventListener('click', openAdd);
+document.getElementById('save-btn').addEventListener('click', handleSave);
+document.getElementById('cancel-btn').addEventListener('click', closeModal);
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('panel-close').addEventListener('click', () => {
+  notesPanel.hidden = true;
+});
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) closeModal();
+});
+searchInput.addEventListener('input', renderTable);
+
+// Filter pills
+document.querySelectorAll('.filter-pill').forEach((pill) => {
+  pill.addEventListener('click', () => {
+    document
+      .querySelectorAll('.filter-pill')
+      .forEach((p) => p.classList.remove('filter-pill--active'));
+    pill.classList.add('filter-pill--active');
+    activeFilter = pill.dataset.filter;
+    renderTable();
+  });
+});
+
+init();
