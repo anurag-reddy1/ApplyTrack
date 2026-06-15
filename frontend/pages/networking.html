@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Networking | ApplyTrack</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/networking.css" />
+  </head>
+  <body>
+    <nav class="nav">
+      <a class="nav__logo" href="./dashboard.html">
+        <span class="nav__logo-icon">🎯</span>ApplyTrack
+      </a>
+      <div class="nav__right">
+        <a class="nav__link" href="./dashboard.html">Pipeline</a>
+        <a class="nav__link" href="./interviews.html">Interviews</a>
+        <a class="nav__link nav__link--active" href="./networking.html">Networking</a>
+        <span class="nav__username" id="nav-username"></span>
+        <button class="btn btn--outline" id="sign-out-btn">Sign Out</button>
+      </div>
+    </nav>
+
+    <main class="page">
+      <header class="page__header">
+        <div>
+          <h1 class="page__title">Networking</h1>
+          <p class="page__subtitle">
+            Log recruiter contacts and never miss a follow-up.
+          </p>
+        </div>
+        <button class="btn btn--primary" id="add-btn">+ Add Contact</button>
+      </header>
+
+      <!-- Stats row -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card">
+          <span class="stat-card__value" id="stat-total">—</span>
+          <span class="stat-card__label">TOTAL CONTACTS</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__value stat-card__value--yellow" id="stat-followup">—</span>
+          <span class="stat-card__label">FOLLOW-UPS DUE</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__value stat-card__value--green" id="stat-recent">—</span>
+          <span class="stat-card__label">CONTACTED THIS MONTH</span>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-pill filter-pill--active" data-filter="">All</button>
+        <button class="filter-pill" data-filter="Recruiter">Recruiter</button>
+        <button class="filter-pill" data-filter="Engineer">Engineer</button>
+        <button class="filter-pill" data-filter="Manager">Manager</button>
+        <div class="filter-bar__spacer"></div>
+        <input
+          class="search-input"
+          id="search-input"
+          type="search"
+          placeholder="Search name, company, or role…"
+        />
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table" id="contacts-table">
+          <thead>
+            <tr>
+              <th>NAME</th>
+              <th>COMPANY</th>
+              <th>ROLE</th>
+              <th>EMAIL</th>
+              <th>LAST CONTACT</th>
+              <th>FOLLOW-UP</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="contacts-tbody">
+            <tr>
+              <td colspan="7" class="empty-row">Loading contacts…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal__header">
+          <h2 class="modal__title" id="modal-title">Add Contact</h2>
+          <button class="icon-btn" id="modal-close">✕</button>
+        </div>
+
+        <div class="modal__body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-name">Name *</label>
+              <input class="form-input" id="f-name" type="text" placeholder="e.g. Sarah Chen" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-company">Company *</label>
+              <input class="form-input" id="f-company" type="text" placeholder="e.g. Meta" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-role">Their Role</label>
+            <input class="form-input" id="f-role" type="text" placeholder="e.g. University Recruiter" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-email">Email</label>
+              <input class="form-input" id="f-email" type="email" placeholder="recruiter@company.com" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-phone">Phone</label>
+              <input class="form-input" id="f-phone" type="tel" placeholder="+1 (555) 000-0000" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-linkedin">LinkedIn URL</label>
+            <input class="form-input" id="f-linkedin" type="url" placeholder="https://linkedin.com/in/…" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-last-contact">Last Contact Date</label>
+              <input class="form-input" id="f-last-contact" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-follow-up">Follow-up Date</label>
+              <input class="form-input" id="f-follow-up" type="date" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-notes">Notes</label>
+            <textarea class="form-input form-textarea" id="f-notes" rows="4"
+              placeholder="How you met, referral status, what was discussed…"></textarea>
+          </div>
+          <p class="form-error" id="form-error" hidden></p>
+        </div>
+
+        <div class="modal__footer">
+          <button class="btn btn--ghost" id="cancel-btn">Cancel</button>
+          <button class="btn btn--primary" id="save-btn">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="../js/networking.js"></script>
+  </body>
+</html>
