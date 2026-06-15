@@ -1,25 +1,5 @@
 const API = '/api/networking';
 
-// ─── Auth guard (matches Anurag's pattern) ────────────────────────────────────
-const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user') || 'null');
-
-if (!token) {
-  window.location.href = '../index.html';
-}
-
-// Show username in nav
-const navUsername = document.getElementById('nav-username');
-if (navUsername && user) {
-  navUsername.textContent = user.name || user.email?.split('@')[0] || '';
-}
-
-document.getElementById('sign-out-btn').addEventListener('click', () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = '../index.html';
-});
-
 // ─── State ───────────────────────────────────────────────────────────────────
 let contacts = [];
 let editingId = null;
@@ -44,14 +24,14 @@ const fields = {
   notes: document.getElementById('f-notes'),
 };
 
-// ─── API helpers ─────────────────────────────────────────────────────────────
-const authHeader = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${token}`,
+// ─── Sign out ─────────────────────────────────────────────────────────────────
+document.getElementById('sign-out-btn').addEventListener('click', () => {
+  window.location.href = '../index.html';
 });
 
+// ─── API helpers ─────────────────────────────────────────────────────────────
 async function fetchAll() {
-  const res = await fetch(API, { headers: authHeader() });
+  const res = await fetch(API, { credentials: 'include' });
   if (!res.ok) throw new Error('Failed to load');
   return res.json();
 }
@@ -59,7 +39,8 @@ async function fetchAll() {
 async function createOne(data) {
   const res = await fetch(API, {
     method: 'POST',
-    headers: authHeader(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -72,7 +53,8 @@ async function createOne(data) {
 async function updateOne(id, data) {
   const res = await fetch(`${API}/${id}`, {
     method: 'PUT',
-    headers: authHeader(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -85,7 +67,7 @@ async function updateOne(id, data) {
 async function deleteOne(id) {
   const res = await fetch(`${API}/${id}`, {
     method: 'DELETE',
-    headers: authHeader(),
+    credentials: 'include',
   });
   if (!res.ok) throw new Error('Failed to delete');
 }
@@ -94,9 +76,7 @@ async function deleteOne(id) {
 function fmtDate(str) {
   if (!str) return '—';
   return new Date(str).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+    month: 'short', day: 'numeric', year: 'numeric',
   });
 }
 
@@ -115,12 +95,8 @@ function thisMonth(str) {
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function updateStats() {
   document.getElementById('stat-total').textContent = contacts.length;
-  document.getElementById('stat-followup').textContent = contacts.filter(
-    (c) => isOverdue(c.followUpDate),
-  ).length;
-  document.getElementById('stat-recent').textContent = contacts.filter((c) =>
-    thisMonth(c.lastContact),
-  ).length;
+  document.getElementById('stat-followup').textContent = contacts.filter((c) => isOverdue(c.followUpDate)).length;
+  document.getElementById('stat-recent').textContent = contacts.filter((c) => thisMonth(c.lastContact)).length;
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
@@ -142,15 +118,14 @@ function renderTable() {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No contacts found. Add one to start networking!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No contacts found. Click + Add Contact to start networking!</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filtered
-    .map((c) => {
-      const overdue = isOverdue(c.followUpDate);
-      const initial = c.name.charAt(0).toUpperCase();
-      return `
+  tbody.innerHTML = filtered.map((c) => {
+    const overdue = isOverdue(c.followUpDate);
+    const initial = c.name.charAt(0).toUpperCase();
+    return `
       <tr class="${overdue ? 'overdue' : ''}" data-id="${c._id}">
         <td>
           <div class="name-cell">
@@ -176,8 +151,7 @@ function renderTable() {
         </td>
       </tr>
     `;
-    })
-    .join('');
+  }).join('');
 
   tbody.querySelectorAll('.edit-btn').forEach((btn) =>
     btn.addEventListener('click', () => openEdit(btn.dataset.id)),
@@ -289,16 +263,12 @@ document.getElementById('add-btn').addEventListener('click', openAdd);
 document.getElementById('save-btn').addEventListener('click', handleSave);
 document.getElementById('cancel-btn').addEventListener('click', closeModal);
 document.getElementById('modal-close').addEventListener('click', closeModal);
-overlay.addEventListener('click', (e) => {
-  if (e.target === overlay) closeModal();
-});
+overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
 searchInput.addEventListener('input', renderTable);
 
 document.querySelectorAll('.filter-pill').forEach((pill) => {
   pill.addEventListener('click', () => {
-    document
-      .querySelectorAll('.filter-pill')
-      .forEach((p) => p.classList.remove('filter-pill--active'));
+    document.querySelectorAll('.filter-pill').forEach((p) => p.classList.remove('filter-pill--active'));
     pill.classList.add('filter-pill--active');
     activeFilter = pill.dataset.filter;
     renderTable();

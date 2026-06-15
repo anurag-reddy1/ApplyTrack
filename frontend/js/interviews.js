@@ -1,25 +1,5 @@
 const API = '/api/interviews';
 
-// ─── Auth guard (matches Anurag's pattern) ────────────────────────────────────
-const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user') || 'null');
-
-if (!token) {
-  window.location.href = '../index.html';
-}
-
-// Show username in nav
-const navUsername = document.getElementById('nav-username');
-if (navUsername && user) {
-  navUsername.textContent = user.name || user.email?.split('@')[0] || '';
-}
-
-document.getElementById('sign-out-btn').addEventListener('click', () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = '../index.html';
-});
-
 // ─── State ───────────────────────────────────────────────────────────────────
 let interviews = [];
 let editingId = null;
@@ -47,14 +27,14 @@ const fields = {
   behavioral: document.getElementById('f-behavioral'),
 };
 
-// ─── API helpers ─────────────────────────────────────────────────────────────
-const authHeader = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${token}`,
+// ─── Sign out ─────────────────────────────────────────────────────────────────
+document.getElementById('sign-out-btn').addEventListener('click', () => {
+  window.location.href = '../index.html';
 });
 
+// ─── API helpers ─────────────────────────────────────────────────────────────
 async function fetchAll() {
-  const res = await fetch(API, { headers: authHeader() });
+  const res = await fetch(API, { credentials: 'include' });
   if (!res.ok) throw new Error('Failed to load');
   return res.json();
 }
@@ -62,7 +42,8 @@ async function fetchAll() {
 async function createOne(data) {
   const res = await fetch(API, {
     method: 'POST',
-    headers: authHeader(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -75,7 +56,8 @@ async function createOne(data) {
 async function updateOne(id, data) {
   const res = await fetch(`${API}/${id}`, {
     method: 'PUT',
-    headers: authHeader(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -88,7 +70,7 @@ async function updateOne(id, data) {
 async function deleteOne(id) {
   const res = await fetch(`${API}/${id}`, {
     method: 'DELETE',
-    headers: authHeader(),
+    credentials: 'include',
   });
   if (!res.ok) throw new Error('Failed to delete');
 }
@@ -133,7 +115,7 @@ function renderTable() {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No interviews found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No interviews found. Click + Add Interview to get started!</td></tr>`;
     return;
   }
 
@@ -158,7 +140,6 @@ function renderTable() {
     )
     .join('');
 
-  // Row click → open notes panel
   tbody.querySelectorAll('tr.clickable').forEach((row) => {
     row.addEventListener('click', (e) => {
       if (e.target.closest('.actions-cell')) return;
@@ -307,12 +288,9 @@ overlay.addEventListener('click', (e) => {
 });
 searchInput.addEventListener('input', renderTable);
 
-// Filter pills
 document.querySelectorAll('.filter-pill').forEach((pill) => {
   pill.addEventListener('click', () => {
-    document
-      .querySelectorAll('.filter-pill')
-      .forEach((p) => p.classList.remove('filter-pill--active'));
+    document.querySelectorAll('.filter-pill').forEach((p) => p.classList.remove('filter-pill--active'));
     pill.classList.add('filter-pill--active');
     activeFilter = pill.dataset.filter;
     renderTable();
