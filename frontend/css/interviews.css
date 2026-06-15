@@ -1,0 +1,87 @@
+/* interviews.css — scoped styles for the Interview Prep page */
+
+/* ── Prep Notes Slide-in Panel ── */
+.notes-panel {
+  position: fixed;
+  top: var(--nav-height);
+  right: 0;
+  width: 380px;
+  height: calc(100vh - var(--nav-height));
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 90;
+  overflow: hidden;
+}
+
+.notes-panel[hidden] {
+  display: none;
+}
+
+.notes-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.notes-panel__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.notes-panel__body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.notes-section h4 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.notes-section p {
+  font-size: 0.875rem;
+  color: var(--text);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.notes-section p.empty {
+  color: var(--text-subtle);
+  font-style: italic;
+}
+
+/* ── Clickable row highlight ── */
+.data-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+/* ── Date formatting ── */
+td.date-col {
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ── Round tag ── */
+.round-tag {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius);
+  white-space: nowrap;
+}

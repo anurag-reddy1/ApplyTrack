@@ -6,6 +6,8 @@ import { fileURLToPath } from "url";
 import { connectDB, closeDB } from "./config/db.js";
 import authRouter from "./routes/auth.js";
 import applicationsRouter from "./routes/applications.js";
+import interviewsRouter from "./routes/interviews.js";
+import networkingRouter from "./routes/networking.js";
 
 dotenv.config();
 
@@ -51,6 +53,8 @@ app.use(express.static(frontendPath));
 // API Routes
 app.use("/api/auth", authRouter);
 app.use("/api/applications", applicationsRouter);
+app.use("/api/interviews", interviewsRouter);
+app.use("/api/networking", networkingRouter);
 
 // Health Check
 app.get("/api/health", (_req, res) => {

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interviews | ApplyTrack</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/interviews.css" />
+  </head>
+  <body>
+    <nav class="nav">
+      <a class="nav__logo" href="./dashboard.html">
+        <span class="nav__logo-icon">🎯</span>ApplyTrack
+      </a>
+      <div class="nav__right">
+        <a class="nav__link" href="./dashboard.html">Pipeline</a>
+        <a class="nav__link nav__link--active" href="./interviews.html">Interviews</a>
+        <a class="nav__link" href="./networking.html">Networking</a>
+        <span class="nav__username" id="nav-username"></span>
+        <button class="btn btn--outline" id="sign-out-btn">Sign Out</button>
+      </div>
+    </nav>
+
+    <main class="page">
+      <header class="page__header">
+        <div>
+          <h1 class="page__title">Interview Prep</h1>
+          <p class="page__subtitle">
+            Track rounds, notes, and outcomes for every interview.
+          </p>
+        </div>
+        <button class="btn btn--primary" id="add-btn">+ Add Interview</button>
+      </header>
+
+      <div class="filter-bar">
+        <button class="filter-pill filter-pill--active" data-filter="">All</button>
+        <button class="filter-pill" data-filter="Upcoming">Upcoming</button>
+        <button class="filter-pill" data-filter="Completed">Completed</button>
+        <button class="filter-pill" data-filter="Cancelled">Cancelled</button>
+        <div class="filter-bar__spacer"></div>
+        <input
+          class="search-input"
+          id="search-input"
+          type="search"
+          placeholder="Search company or role…"
+        />
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table" id="interviews-table">
+          <thead>
+            <tr>
+              <th>COMPANY</th>
+              <th>ROLE</th>
+              <th>ROUND</th>
+              <th>STATUS</th>
+              <th>DATE</th>
+              <th>RESULT</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="interviews-tbody">
+            <tr>
+              <td colspan="7" class="empty-row">Loading interviews…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Detail / Prep Notes Panel -->
+    <aside class="notes-panel" id="notes-panel" hidden>
+      <div class="notes-panel__header">
+        <h3 class="notes-panel__title" id="panel-title">Prep Notes</h3>
+        <button class="icon-btn" id="panel-close">✕</button>
+      </div>
+      <div class="notes-panel__body" id="panel-body"></div>
+    </aside>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal__header">
+          <h2 class="modal__title" id="modal-title">Add Interview</h2>
+          <button class="icon-btn" id="modal-close">✕</button>
+        </div>
+
+        <div class="modal__body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-company">Company *</label>
+              <input class="form-input" id="f-company" type="text" placeholder="e.g. Google" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-role">Role *</label>
+              <input class="form-input" id="f-role" type="text" placeholder="e.g. SWE Intern" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-round">Round *</label>
+              <select class="form-input" id="f-round">
+                <option value="Phone Screen">Phone Screen</option>
+                <option value="Technical 1">Technical 1</option>
+                <option value="Technical 2">Technical 2</option>
+                <option value="Behavioral">Behavioral</option>
+                <option value="Final Round">Final Round</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-date">Date &amp; Time</label>
+              <input class="form-input" id="f-date" type="datetime-local" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-status">Status</label>
+              <select class="form-input" id="f-status">
+                <option value="Upcoming">Upcoming</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-result">Result</label>
+              <select class="form-input" id="f-result">
+                <option value="Pending">Pending</option>
+                <option value="Pass">Pass</option>
+                <option value="Fail">Fail</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-interviewer">Interviewer Name</label>
+            <input class="form-input" id="f-interviewer" type="text" placeholder="e.g. Jane Smith" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-tech">Technical Prep Notes</label>
+            <textarea class="form-input form-textarea" id="f-tech" rows="4"
+              placeholder="Topics, LeetCode patterns, system design notes…"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-behavioral">Behavioral Prep Notes</label>
+            <textarea class="form-input form-textarea" id="f-behavioral" rows="4"
+              placeholder="STAR stories, questions to ask…"></textarea>
+          </div>
+          <p class="form-error" id="form-error" hidden></p>
+        </div>
+
+        <div class="modal__footer">
+          <button class="btn btn--ghost" id="cancel-btn">Cancel</button>
+          <button class="btn btn--primary" id="save-btn">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="../js/interviews.js"></script>
+  </body>
+</html>

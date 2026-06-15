@@ -1,0 +1,93 @@
+/* networking.css — scoped styles for the Networking page */
+
+/* ── Stats row (matches dashboard stat cards) ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.stat-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-card__value--yellow {
+  color: var(--yellow);
+}
+
+.stat-card__value--green {
+  color: var(--green);
+}
+
+.stat-card__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Avatar initial ── */
+.contact-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ── Follow-up overdue highlight ── */
+tr.overdue td {
+  background: rgba(210, 153, 34, 0.04);
+}
+
+.overdue-label {
+  color: var(--yellow);
+  font-weight: 600;
+}
+
+/* ── Email / LinkedIn link in table ── */
+.contact-link {
+  color: var(--blue);
+  font-size: 0.8rem;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Notes tooltip on hover ── */
+td.notes-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
