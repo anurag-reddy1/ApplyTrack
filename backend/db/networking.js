@@ -3,13 +3,9 @@ import { getDB } from '../config/db.js';
 
 const COLLECTION = 'networking';
 
-export async function getAllContacts() {
+export async function getAllContacts(filter = {}) {
   const db = getDB();
-  return db
-    .collection(COLLECTION)
-    .find({})
-    .sort({ followUpDate: 1 })
-    .toArray();
+  return db.collection(COLLECTION).find(filter).sort({ followUpDate: 1 }).toArray();
 }
 
 export async function getContactById(id) {
@@ -26,6 +22,7 @@ export async function createContact(data) {
     email: data.email || '',
     linkedin: data.linkedin || '',
     phone: data.phone || '',
+    applicationId: data.applicationId || null,
     lastContact: data.lastContact ? new Date(data.lastContact) : null,
     followUpDate: data.followUpDate ? new Date(data.followUpDate) : null,
     notes: data.notes || '',

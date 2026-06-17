@@ -1,7 +1,9 @@
 const API = '/api/networking';
+const APPS_API = '/api/applications';
 
 // ─── State ───────────────────────────────────────────────────────────────────
 let contacts = [];
+let applications = [];
 let editingId = null;
 let activeFilter = '';
 
@@ -22,6 +24,7 @@ const fields = {
   lastContact: document.getElementById('f-last-contact'),
   followUp: document.getElementById('f-follow-up'),
   notes: document.getElementById('f-notes'),
+  application: document.getElementById('f-application'),
 };
 
 // ─── Sign out ─────────────────────────────────────────────────────────────────
@@ -34,6 +37,14 @@ async function fetchAll() {
   const res = await fetch(API, { credentials: 'include' });
   if (!res.ok) throw new Error('Failed to load');
   return res.json();
+}
+
+async function fetchApplications() {
+  try {
+    const res = await fetch(APPS_API, { credentials: 'include' });
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
 }
 
 async function createOne(data) {
@@ -72,6 +83,20 @@ async function deleteOne(id) {
   if (!res.ok) throw new Error('Failed to delete');
 }
 
+// ─── Populate application dropdown ───────────────────────────────────────────
+function populateAppDropdown(selectedId = '') {
+  const sel = fields.application;
+  if (!sel) return;
+  sel.innerHTML = '<option value="">None — not linked</option>';
+  applications.forEach(app => {
+    const opt = document.createElement('option');
+    opt.value = app._id;
+    opt.textContent = `${app.company} — ${app.role}`;
+    if (String(app._id) === String(selectedId)) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtDate(str) {
   if (!str) return '—';
@@ -92,18 +117,26 @@ function thisMonth(str) {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 }
 
+function getAppName(applicationId) {
+  if (!applicationId) return null;
+  const app = applications.find(a => String(a._id) === String(applicationId));
+  return app ? `${app.company}` : null;
+}
+
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function updateStats() {
   document.getElementById('stat-total').textContent = contacts.length;
-  document.getElementById('stat-followup').textContent = contacts.filter((c) => isOverdue(c.followUpDate)).length;
-  document.getElementById('stat-recent').textContent = contacts.filter((c) => thisMonth(c.lastContact)).length;
+  document.getElementById('stat-followup').textContent =
+    contacts.filter(c => isOverdue(c.followUpDate)).length;
+  document.getElementById('stat-recent').textContent =
+    contacts.filter(c => thisMonth(c.lastContact)).length;
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function renderTable() {
   const query = searchInput.value.toLowerCase();
 
-  const filtered = contacts.filter((c) => {
+  const filtered = contacts.filter(c => {
     if (activeFilter) {
       if (!(c.role || '').toLowerCase().includes(activeFilter.toLowerCase())) return false;
     }
@@ -122,15 +155,18 @@ function renderTable() {
     return;
   }
 
-  tbody.innerHTML = filtered.map((c) => {
+  tbody.innerHTML = filtered.map(c => {
     const overdue = isOverdue(c.followUpDate);
-    const initial = c.name.charAt(0).toUpperCase();
+    const appName = getAppName(c.applicationId);
     return `
       <tr class="${overdue ? 'overdue' : ''}" data-id="${c._id}">
         <td>
           <div class="name-cell">
-            <div class="contact-avatar">${initial}</div>
-            <strong>${c.name}</strong>
+            <div class="contact-avatar">${c.name.charAt(0).toUpperCase()}</div>
+            <div>
+              <strong>${c.name}</strong>
+              ${appName ? `<div style="font-size:0.72rem;color:#58a6ff;margin-top:0.1rem">🔗 ${appName}</div>` : ''}
+            </div>
           </div>
         </td>
         <td>${c.company}</td>
@@ -153,11 +189,11 @@ function renderTable() {
     `;
   }).join('');
 
-  tbody.querySelectorAll('.edit-btn').forEach((btn) =>
-    btn.addEventListener('click', () => openEdit(btn.dataset.id)),
+  tbody.querySelectorAll('.edit-btn').forEach(btn =>
+    btn.addEventListener('click', () => openEdit(btn.dataset.id))
   );
-  tbody.querySelectorAll('.delete-btn').forEach((btn) =>
-    btn.addEventListener('click', () => handleDelete(btn.dataset.id)),
+  tbody.querySelectorAll('.delete-btn').forEach(btn =>
+    btn.addEventListener('click', () => handleDelete(btn.dataset.id))
   );
 }
 
@@ -171,16 +207,17 @@ function openModal(title) {
 function closeModal() {
   overlay.hidden = true;
   editingId = null;
-  Object.values(fields).forEach((el) => (el.value = ''));
+  Object.values(fields).forEach(el => { if (el) el.value = ''; });
 }
 
 function openAdd() {
   editingId = null;
+  populateAppDropdown('');
   openModal('Add Contact');
 }
 
 function openEdit(id) {
-  const c = contacts.find((x) => String(x._id) === id);
+  const c = contacts.find(x => String(x._id) === id);
   if (!c) return;
   editingId = id;
   fields.name.value = c.name;
@@ -192,6 +229,7 @@ function openEdit(id) {
   fields.lastContact.value = c.lastContact ? c.lastContact.slice(0, 10) : '';
   fields.followUp.value = c.followUpDate ? c.followUpDate.slice(0, 10) : '';
   fields.notes.value = c.notes || '';
+  populateAppDropdown(c.applicationId || '');
   openModal('Edit Contact');
 }
 
@@ -206,6 +244,7 @@ function getFormData() {
     lastContact: fields.lastContact.value || null,
     followUpDate: fields.followUp.value || null,
     notes: fields.notes.value.trim(),
+    applicationId: fields.application?.value || null,
   };
 }
 
@@ -220,7 +259,7 @@ async function handleSave() {
   try {
     if (editingId) {
       const updated = await updateOne(editingId, data);
-      contacts = contacts.map((c) => (String(c._id) === editingId ? updated : c));
+      contacts = contacts.map(c => (String(c._id) === editingId ? updated : c));
     } else {
       const created = await createOne(data);
       contacts.unshift(created);
@@ -238,7 +277,7 @@ async function handleDelete(id) {
   if (!confirm('Remove this contact?')) return;
   try {
     await deleteOne(id);
-    contacts = contacts.filter((c) => String(c._id) !== id);
+    contacts = contacts.filter(c => String(c._id) !== id);
     updateStats();
     renderTable();
   } catch (err) {
@@ -249,7 +288,7 @@ async function handleDelete(id) {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
   try {
-    contacts = await fetchAll();
+    [contacts, applications] = await Promise.all([fetchAll(), fetchApplications()]);
   } catch {
     tbody.innerHTML = `<tr><td colspan="7" class="empty-row" style="color:var(--red)">Could not connect to server.</td></tr>`;
     return;
@@ -258,17 +297,17 @@ async function init() {
   renderTable();
 }
 
-// ─── Event listeners ──────────────────────────────────────────────────────────
+// ─── Events ───────────────────────────────────────────────────────────────────
 document.getElementById('add-btn').addEventListener('click', openAdd);
 document.getElementById('save-btn').addEventListener('click', handleSave);
 document.getElementById('cancel-btn').addEventListener('click', closeModal);
 document.getElementById('modal-close').addEventListener('click', closeModal);
-overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 searchInput.addEventListener('input', renderTable);
 
-document.querySelectorAll('.filter-pill').forEach((pill) => {
+document.querySelectorAll('.filter-pill').forEach(pill => {
   pill.addEventListener('click', () => {
-    document.querySelectorAll('.filter-pill').forEach((p) => p.classList.remove('filter-pill--active'));
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('filter-pill--active'));
     pill.classList.add('filter-pill--active');
     activeFilter = pill.dataset.filter;
     renderTable();
