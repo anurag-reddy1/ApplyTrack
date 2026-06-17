@@ -47,15 +47,27 @@ router.get("/", async (req, res) => {
       : "followUpDate";
     const sortOrder = sortDir === "asc" ? 1 : -1;
 
-    const [docs, total] = await Promise.all([
-      contacts
-        .find(filter)
-        .sort({ [sortField]: sortOrder })
-        .skip(skip)
-        .limit(limitNum)
-        .toArray(),
-      contacts.countDocuments(filter),
-    ]);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const [docs, total, statsTotal, statsFollowupDue, statsRecentThisMonth] =
+      await Promise.all([
+        contacts
+          .find(filter)
+          .sort({ [sortField]: sortOrder })
+          .skip(skip)
+          .limit(limitNum)
+          .toArray(),
+        contacts.countDocuments(filter),
+        contacts.countDocuments({}),
+        contacts.countDocuments({
+          followUpDate: { $ne: null, $lt: now },
+        }),
+        contacts.countDocuments({
+          lastContact: { $gte: startOfMonth, $lt: startOfNextMonth },
+        }),
+      ]);
 
     return res.status(200).json({
       data: docs,
@@ -63,6 +75,11 @@ router.get("/", async (req, res) => {
       page: pageNum,
       limit: limitNum,
       totalPages: Math.ceil(total / limitNum),
+      stats: {
+        total: statsTotal,
+        followupDue: statsFollowupDue,
+        recentThisMonth: statsRecentThisMonth,
+      },
     });
     // eslint-disable-next-line no-unused-vars
   } catch (err) {

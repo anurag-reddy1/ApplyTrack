@@ -70,6 +70,7 @@ async function loadContacts() {
     totalCount = result.total;
     totalPages = result.totalPages;
     currentPage = result.page;
+    if (result.stats) updateStats(result.stats);
   } catch {
     if (loadingRow) loadingRow.hidden = true;
     tbody
@@ -80,7 +81,6 @@ async function loadContacts() {
   }
 
   if (loadingRow) loadingRow.hidden = true;
-  updateStats();
   renderTable();
   renderPagination();
 }
@@ -165,6 +165,7 @@ function isOverdue(str) {
   return new Date(str) < new Date();
 }
 
+// eslint-disable-next-line no-unused-vars
 function thisMonth(str) {
   if (!str) return false;
   const d = new Date(str);
@@ -181,14 +182,10 @@ function getAppName(applicationId) {
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
-function updateStats() {
-  document.getElementById("stat-total").textContent = contacts.length;
-  document.getElementById("stat-followup").textContent = contacts.filter((c) =>
-    isOverdue(c.followUpDate)
-  ).length;
-  document.getElementById("stat-recent").textContent = contacts.filter((c) =>
-    thisMonth(c.lastContact)
-  ).length;
+function updateStats(stats) {
+  document.getElementById("stat-total").textContent = stats.total;
+  document.getElementById("stat-followup").textContent = stats.followupDue;
+  document.getElementById("stat-recent").textContent = stats.recentThisMonth;
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
