@@ -1,6 +1,6 @@
 import { Router } from "express";
+import { getDB } from "../config/db.js";
 import {
-  getAllInterviews,
   getInterviewById,
   createInterview,
   updateInterview,
@@ -11,8 +11,60 @@ const router = Router();
 
 router.get("/", async (req, res) => {
   try {
-    const interviews = await getAllInterviews();
-    res.json(interviews);
+    const {
+      status,
+      search,
+      page = "1",
+      limit = "20",
+      sortBy = "date",
+      sortDir = "desc",
+    } = req.query;
+
+    const db = getDB();
+    const interviews = db.collection("interviews");
+
+    const VALID_STATUSES = ["Upcoming", "Completed", "Cancelled"];
+    const filter = {};
+    if (status && VALID_STATUSES.includes(status)) filter.status = status;
+    if (search) {
+      filter.$or = [
+        { company: { $regex: search, $options: "i" } },
+        { role: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const SORTABLE_FIELDS = [
+      "company",
+      "role",
+      "round",
+      "status",
+      "date",
+      "result",
+    ];
+    const sortField = SORTABLE_FIELDS.includes(sortBy) ? sortBy : "date";
+    const sortOrder = sortDir === "asc" ? 1 : -1;
+
+    const [docs, total] = await Promise.all([
+      interviews
+        .find(filter)
+        .sort({ [sortField]: sortOrder })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray(),
+      interviews.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({
+      data: docs,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
     // eslint-disable-next-line no-unused-vars
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch interviews" });

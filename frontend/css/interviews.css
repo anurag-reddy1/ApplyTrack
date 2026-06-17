@@ -206,6 +206,21 @@
   position: sticky; bottom: 0; background: var(--iv-surface);
 }
 
+/* ── Sortable column headers ── */
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { color: var(--iv-text); }
+.sort-icon { margin-left: 0.25rem; opacity: 0.5; font-size: 0.75rem; }
+th.sortable[aria-sort="ascending"] .sort-icon,
+th.sortable[aria-sort="descending"] .sort-icon { opacity: 1; }
+
+/* ── Pagination ── */
+.pagination-nav { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+.pagination-info { font-size: 0.8rem; color: var(--iv-text-muted); }
+.pagination .page-link { background-color: var(--iv-surface); border-color: var(--iv-border); color: var(--iv-text-muted); }
+.pagination .page-item.active .page-link { background-color: var(--iv-accent); border-color: var(--iv-accent); color: #fff; }
+.pagination .page-item.disabled .page-link { background-color: var(--iv-surface); border-color: var(--iv-border); color: var(--iv-text-subtle); }
+.pagination .page-link:hover:not(.disabled) { background-color: var(--iv-surface-hover); color: var(--iv-text); }
+
 /* ── Bootstrap form overrides (dark) ── */
 .form-label {
   font-size: 0.8rem; font-weight: 600;

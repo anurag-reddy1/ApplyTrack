@@ -46,23 +46,23 @@
           <table class="table table-hover mb-0" id="interviews-table">
             <thead>
               <tr>
-                <th>COMPANY</th>
-                <th>ROLE</th>
-                <th>ROUND</th>
-                <th>STATUS</th>
-                <th>DATE</th>
-                <th>RESULT</th>
+                <th class="sortable" data-col="company">COMPANY <span class="sort-icon">↕</span></th>
+                <th class="sortable" data-col="role">ROLE <span class="sort-icon">↕</span></th>
+                <th class="sortable" data-col="round">ROUND <span class="sort-icon">↕</span></th>
+                <th class="sortable" data-col="status">STATUS <span class="sort-icon">↕</span></th>
+                <th class="sortable" data-col="date">DATE <span class="sort-icon">↓</span></th>
+                <th class="sortable" data-col="result">RESULT <span class="sort-icon">↕</span></th>
                 <th>ACTIONS</th>
               </tr>
             </thead>
             <tbody id="interviews-tbody">
-              <tr>
-                <td colspan="7" class="empty-row">Loading interviews…</td>
-              </tr>
+              <tr id="iv-loading"><td colspan="7" class="empty-row">Loading…</td></tr>
+              <tr id="iv-empty" hidden><td colspan="7" class="empty-row">No interviews found.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
+      <div id="iv-pagination" class="pagination-nav mt-3"></div>
     </main>
 
     <!-- Detail / Prep Notes Panel -->

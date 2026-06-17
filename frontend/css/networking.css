@@ -207,3 +207,18 @@ tr.overdue td { background: rgba(210,153,34,0.04); }
   box-shadow: none;
 }
 .form-select option { background: var(--nw-surface); }
+
+/* ── Sortable column headers ── */
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { color: var(--nw-text); }
+.sort-icon { margin-left: 0.25rem; opacity: 0.5; font-size: 0.75rem; }
+th.sortable[aria-sort="ascending"] .sort-icon,
+th.sortable[aria-sort="descending"] .sort-icon { opacity: 1; }
+
+/* ── Pagination ── */
+.pagination-nav { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+.pagination-info { font-size: 0.8rem; color: var(--nw-text-muted); }
+.pagination .page-link { background-color: var(--nw-surface); border-color: var(--nw-border); color: var(--nw-text-muted); }
+.pagination .page-item.active .page-link { background-color: var(--nw-accent); border-color: var(--nw-accent); color: #fff; }
+.pagination .page-item.disabled .page-link { background-color: var(--nw-surface); border-color: var(--nw-border); color: var(--nw-text-subtle); }
+.pagination .page-link:hover:not(.disabled) { background-color: var(--nw-surface-hover); color: var(--nw-text); }
