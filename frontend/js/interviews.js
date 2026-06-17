@@ -1,101 +1,113 @@
-const API = '/api/interviews';
+import { requireAuth, clearSession } from "./modules/storage.js";
+
+const session = requireAuth();
+if (!session) throw new Error("Not authenticated.");
+const { username } = session;
+
+const API = "/api/interviews";
 
 // ─── State ───────────────────────────────────────────────────────────────────
 let interviews = [];
 let editingId = null;
-let activeFilter = '';
+let activeFilter = "";
 
 // ─── DOM refs ────────────────────────────────────────────────────────────────
-const tbody = document.getElementById('interviews-tbody');
-const overlay = document.getElementById('modal-overlay');
-const modalTitle = document.getElementById('modal-title');
-const formError = document.getElementById('form-error');
-const searchInput = document.getElementById('search-input');
-const notesPanel = document.getElementById('notes-panel');
-const panelTitle = document.getElementById('panel-title');
-const panelBody = document.getElementById('panel-body');
+const tbody = document.getElementById("interviews-tbody");
+const overlay = document.getElementById("modal-overlay");
+const modalTitle = document.getElementById("modal-title");
+const formError = document.getElementById("form-error");
+const searchInput = document.getElementById("search-input");
+const notesPanel = document.getElementById("notes-panel");
+const panelTitle = document.getElementById("panel-title");
+const panelBody = document.getElementById("panel-body");
 
 const fields = {
-  company: document.getElementById('f-company'),
-  role: document.getElementById('f-role'),
-  round: document.getElementById('f-round'),
-  date: document.getElementById('f-date'),
-  status: document.getElementById('f-status'),
-  result: document.getElementById('f-result'),
-  interviewer: document.getElementById('f-interviewer'),
-  tech: document.getElementById('f-tech'),
-  behavioral: document.getElementById('f-behavioral'),
+  company: document.getElementById("f-company"),
+  role: document.getElementById("f-role"),
+  round: document.getElementById("f-round"),
+  date: document.getElementById("f-date"),
+  status: document.getElementById("f-status"),
+  result: document.getElementById("f-result"),
+  interviewer: document.getElementById("f-interviewer"),
+  tech: document.getElementById("f-tech"),
+  behavioral: document.getElementById("f-behavioral"),
 };
 
-// ─── Sign out ─────────────────────────────────────────────────────────────────
-document.getElementById('sign-out-btn').addEventListener('click', () => {
-  window.location.href = '../index.html';
+// ─── Nav ──────────────────────────────────────────────────────────────────────
+document.getElementById("nav-username").textContent = username;
+document.getElementById("sign-out-btn").addEventListener("click", () => {
+  clearSession();
+  window.location.href = "../index.html";
 });
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
 async function fetchAll() {
-  const res = await fetch(API, { credentials: 'include' });
-  if (!res.ok) throw new Error('Failed to load');
+  const res = await fetch(API, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load");
   return res.json();
 }
 
 async function createOne(data) {
   const res = await fetch(API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(data),
   });
   if (!res.ok) {
     const { error } = await res.json();
-    throw new Error(error || 'Failed to create');
+    throw new Error(error || "Failed to create");
   }
   return res.json();
 }
 
 async function updateOne(id, data) {
   const res = await fetch(`${API}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(data),
   });
   if (!res.ok) {
     const { error } = await res.json();
-    throw new Error(error || 'Failed to update');
+    throw new Error(error || "Failed to update");
   }
   return res.json();
 }
 
 async function deleteOne(id) {
   const res = await fetch(`${API}/${id}`, {
-    method: 'DELETE',
-    credentials: 'include',
+    method: "DELETE",
+    credentials: "include",
   });
-  if (!res.ok) throw new Error('Failed to delete');
+  if (!res.ok) throw new Error("Failed to delete");
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function statusBadge(status) {
   const map = {
-    Upcoming: 'badge--blue',
-    Completed: 'badge--green',
-    Cancelled: 'badge--grey',
+    Upcoming: "badge--blue",
+    Completed: "badge--green",
+    Cancelled: "badge--grey",
   };
-  return `<span class="badge ${map[status] ?? 'badge--grey'}">${status}</span>`;
+  return `<span class="badge ${map[status] ?? "badge--grey"}">${status}</span>`;
 }
 
 function resultBadge(result) {
-  const map = { Pass: 'badge--green', Fail: 'badge--red', Pending: 'badge--yellow' };
-  return `<span class="badge ${map[result] ?? 'badge--yellow'}">${result}</span>`;
+  const map = {
+    Pass: "badge--green",
+    Fail: "badge--red",
+    Pending: "badge--yellow",
+  };
+  return `<span class="badge ${map[result] ?? "badge--yellow"}">${result}</span>`;
 }
 
 function fmtDate(str) {
-  if (!str) return '—';
-  return new Date(str).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  if (!str) return "—";
+  return new Date(str).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
@@ -136,29 +148,29 @@ function renderTable() {
           </div>
         </td>
       </tr>
-    `,
+    `
     )
-    .join('');
+    .join("");
 
-  tbody.querySelectorAll('tr.clickable').forEach((row) => {
-    row.addEventListener('click', (e) => {
-      if (e.target.closest('.actions-cell')) return;
+  tbody.querySelectorAll("tr.clickable").forEach((row) => {
+    row.addEventListener("click", (e) => {
+      if (e.target.closest(".actions-cell")) return;
       openNotesPanel(row.dataset.id);
     });
   });
 
-  tbody.querySelectorAll('.edit-btn').forEach((btn) =>
-    btn.addEventListener('click', (e) => {
+  tbody.querySelectorAll(".edit-btn").forEach((btn) =>
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
       openEdit(btn.dataset.id);
-    }),
+    })
   );
 
-  tbody.querySelectorAll('.delete-btn').forEach((btn) =>
-    btn.addEventListener('click', (e) => {
+  tbody.querySelectorAll(".delete-btn").forEach((btn) =>
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
       handleDelete(btn.dataset.id);
-    }),
+    })
   );
 }
 
@@ -170,13 +182,13 @@ function openNotesPanel(id) {
   panelBody.innerHTML = `
     <div class="notes-section">
       <h4>Technical Prep Notes</h4>
-      <p class="${iv.techNotes ? '' : 'empty'}">${iv.techNotes || 'No notes added yet.'}</p>
+      <p class="${iv.techNotes ? "" : "empty"}">${iv.techNotes || "No notes added yet."}</p>
     </div>
     <div class="notes-section">
       <h4>Behavioral Prep Notes</h4>
-      <p class="${iv.behavioralNotes ? '' : 'empty'}">${iv.behavioralNotes || 'No notes added yet.'}</p>
+      <p class="${iv.behavioralNotes ? "" : "empty"}">${iv.behavioralNotes || "No notes added yet."}</p>
     </div>
-    ${iv.interviewerName ? `<div class="notes-section"><h4>Interviewer</h4><p>${iv.interviewerName}</p></div>` : ''}
+    ${iv.interviewerName ? `<div class="notes-section"><h4>Interviewer</h4><p>${iv.interviewerName}</p></div>` : ""}
   `;
   notesPanel.hidden = false;
 }
@@ -191,12 +203,12 @@ function openModal(title) {
 function closeModal() {
   overlay.hidden = true;
   editingId = null;
-  Object.values(fields).forEach((el) => (el.value = ''));
+  Object.values(fields).forEach((el) => (el.value = ""));
 }
 
 function openAdd() {
   editingId = null;
-  openModal('Add Interview');
+  openModal("Add Interview");
 }
 
 function openEdit(id) {
@@ -206,13 +218,15 @@ function openEdit(id) {
   fields.company.value = iv.company;
   fields.role.value = iv.role;
   fields.round.value = iv.round;
-  fields.date.value = iv.date ? new Date(iv.date).toISOString().slice(0, 16) : '';
+  fields.date.value = iv.date
+    ? new Date(iv.date).toISOString().slice(0, 16)
+    : "";
   fields.status.value = iv.status;
   fields.result.value = iv.result;
-  fields.interviewer.value = iv.interviewerName || '';
-  fields.tech.value = iv.techNotes || '';
-  fields.behavioral.value = iv.behavioralNotes || '';
-  openModal('Edit Interview');
+  fields.interviewer.value = iv.interviewerName || "";
+  fields.tech.value = iv.techNotes || "";
+  fields.behavioral.value = iv.behavioralNotes || "";
+  openModal("Edit Interview");
 }
 
 function getFormData() {
@@ -233,14 +247,16 @@ function getFormData() {
 async function handleSave() {
   const data = getFormData();
   if (!data.company || !data.role) {
-    formError.textContent = 'Company and Role are required.';
+    formError.textContent = "Company and Role are required.";
     formError.hidden = false;
     return;
   }
   try {
     if (editingId) {
       const updated = await updateOne(editingId, data);
-      interviews = interviews.map((iv) => (String(iv._id) === editingId ? updated : iv));
+      interviews = interviews.map((iv) =>
+        String(iv._id) === editingId ? updated : iv
+      );
     } else {
       const created = await createOne(data);
       interviews.unshift(created);
@@ -254,7 +270,7 @@ async function handleSave() {
 }
 
 async function handleDelete(id) {
-  if (!confirm('Delete this interview record?')) return;
+  if (!confirm("Delete this interview record?")) return;
   try {
     await deleteOne(id);
     interviews = interviews.filter((iv) => String(iv._id) !== id);
@@ -276,22 +292,24 @@ async function init() {
 }
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
-document.getElementById('add-btn').addEventListener('click', openAdd);
-document.getElementById('save-btn').addEventListener('click', handleSave);
-document.getElementById('cancel-btn').addEventListener('click', closeModal);
-document.getElementById('modal-close').addEventListener('click', closeModal);
-document.getElementById('panel-close').addEventListener('click', () => {
+document.getElementById("add-btn").addEventListener("click", openAdd);
+document.getElementById("save-btn").addEventListener("click", handleSave);
+document.getElementById("cancel-btn").addEventListener("click", closeModal);
+document.getElementById("modal-close").addEventListener("click", closeModal);
+document.getElementById("panel-close").addEventListener("click", () => {
   notesPanel.hidden = true;
 });
-overlay.addEventListener('click', (e) => {
+overlay.addEventListener("click", (e) => {
   if (e.target === overlay) closeModal();
 });
-searchInput.addEventListener('input', renderTable);
+searchInput.addEventListener("input", renderTable);
 
-document.querySelectorAll('.filter-pill').forEach((pill) => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('.filter-pill').forEach((p) => p.classList.remove('filter-pill--active'));
-    pill.classList.add('filter-pill--active');
+document.querySelectorAll(".filter-pill").forEach((pill) => {
+  pill.addEventListener("click", () => {
+    document
+      .querySelectorAll(".filter-pill")
+      .forEach((p) => p.classList.remove("filter-pill--active"));
+    pill.classList.add("filter-pill--active");
     activeFilter = pill.dataset.filter;
     renderTable();
   });
