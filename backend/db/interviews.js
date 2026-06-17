@@ -1,7 +1,7 @@
-import { ObjectId } from 'mongodb';
-import { getDB } from '../config/db.js';
+import { ObjectId } from "mongodb";
+import { getDB } from "../config/db.js";
 
-const COLLECTION = 'interviews';
+const COLLECTION = "interviews";
 
 export async function getAllInterviews() {
   const db = getDB();
@@ -20,11 +20,11 @@ export async function createInterview(data) {
     role: data.role,
     round: data.round,
     date: data.date ? new Date(data.date) : null,
-    status: data.status || 'Upcoming',
-    interviewerName: data.interviewerName || '',
-    techNotes: data.techNotes || '',
-    behavioralNotes: data.behavioralNotes || '',
-    result: data.result || 'Pending',
+    status: data.status || "Upcoming",
+    interviewerName: data.interviewerName || "",
+    techNotes: data.techNotes || "",
+    behavioralNotes: data.behavioralNotes || "",
+    result: data.result || "Pending",
     createdAt: new Date(),
     updatedAt: new Date(),
   };

@@ -1,11 +1,15 @@
-import { ObjectId } from 'mongodb';
-import { getDB } from '../config/db.js';
+import { ObjectId } from "mongodb";
+import { getDB } from "../config/db.js";
 
-const COLLECTION = 'networking';
+const COLLECTION = "networking";
 
 export async function getAllContacts(filter = {}) {
   const db = getDB();
-  return db.collection(COLLECTION).find(filter).sort({ followUpDate: 1 }).toArray();
+  return db
+    .collection(COLLECTION)
+    .find(filter)
+    .sort({ followUpDate: 1 })
+    .toArray();
 }
 
 export async function getContactById(id) {
@@ -18,14 +22,14 @@ export async function createContact(data) {
   const doc = {
     name: data.name,
     company: data.company,
-    role: data.role || '',
-    email: data.email || '',
-    linkedin: data.linkedin || '',
-    phone: data.phone || '',
+    role: data.role || "",
+    email: data.email || "",
+    linkedin: data.linkedin || "",
+    phone: data.phone || "",
     applicationId: data.applicationId || null,
     lastContact: data.lastContact ? new Date(data.lastContact) : null,
     followUpDate: data.followUpDate ? new Date(data.followUpDate) : null,
-    notes: data.notes || '',
+    notes: data.notes || "",
     createdAt: new Date(),
     updatedAt: new Date(),
   };

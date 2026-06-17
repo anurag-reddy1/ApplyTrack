@@ -1,22 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Networking | ApplyTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🎯</text></svg>" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../css/base.css" />
     <link rel="stylesheet" href="../css/networking.css" />
   </head>
   <body>
-    <nav class="nav">
-      <a class="nav__logo" href="./dashboard.html">
-        <span class="nav__logo-icon">🎯</span>ApplyTrack
-      </a>
-      <div class="nav__right">
-        <a class="nav__link" href="./dashboard.html">Pipeline</a>
-        <a class="nav__link" href="./interviews.html">Interviews</a>
-        <a class="nav__link nav__link--active" href="./networking.html">Networking</a>
-        <span class="nav__username" id="nav-username"></span>
-        <button class="btn btn--outline" id="sign-out-btn">Sign Out</button>
+    <nav class="navbar sticky-top nav-header">
+      <div class="nav-inner">
+        <a class="navbar-brand nav-brand" href="./dashboard.html">🎯 ApplyTrack</a>
+        <div class="d-flex align-items-center gap-3">
+          <a href="./dashboard.html" class="nav-link-custom">Pipeline</a>
+          <a href="./interviews.html" class="nav-link-custom">Interviews</a>
+          <a href="./networking.html" class="nav-link-custom active">Networking</a>
+          <span class="nav-username" id="nav-username"></span>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="sign-out-btn">Sign Out</button>
+        </div>
       </div>
     </nav>
 
@@ -24,11 +27,9 @@
       <header class="page__header">
         <div>
           <h1 class="page__title">Networking</h1>
-          <p class="page__subtitle">
-            Log recruiter contacts and never miss a follow-up.
-          </p>
+          <p class="page__subtitle">Log recruiter contacts and never miss a follow-up.</p>
         </div>
-        <button class="btn btn--primary" id="add-btn">+ Add Contact</button>
+        <button class="btn btn-primary" id="add-btn">+ Add Contact</button>
       </header>
 
       <!-- Stats row -->
@@ -53,104 +54,95 @@
         <button class="filter-pill" data-filter="Engineer">Engineer</button>
         <button class="filter-pill" data-filter="Manager">Manager</button>
         <div class="filter-bar__spacer"></div>
-        <input
-          class="search-input"
-          id="search-input"
-          type="search"
-          placeholder="Search name, company, or role…"
-        />
+        <input class="form-control search-input" id="search-input" type="search" placeholder="Search name, company, or role…" />
       </div>
 
-      <div class="table-wrapper">
-        <table class="data-table" id="contacts-table">
-          <thead>
-            <tr>
-              <th>NAME</th>
-              <th>COMPANY</th>
-              <th>ROLE</th>
-              <th>EMAIL</th>
-              <th>LAST CONTACT</th>
-              <th>FOLLOW-UP</th>
-              <th>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody id="contacts-tbody">
-            <tr>
-              <td colspan="7" class="empty-row">Loading contacts…</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="card table-card">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" id="contacts-table">
+            <thead>
+              <tr>
+                <th>NAME</th>
+                <th>COMPANY</th>
+                <th>ROLE</th>
+                <th>EMAIL</th>
+                <th>LAST CONTACT</th>
+                <th>FOLLOW-UP</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="contacts-tbody">
+              <tr>
+                <td colspan="7" class="empty-row">Loading contacts…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
 
     <!-- Modal -->
     <div class="modal-overlay" id="modal-overlay" hidden>
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div class="modal__header">
-          <h2 class="modal__title" id="modal-title">Add Contact</h2>
+      <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-box__header">
+          <h2 class="modal-box__title" id="modal-title">Add Contact</h2>
           <button class="icon-btn" id="modal-close">✕</button>
         </div>
-
-        <div class="modal__body">
-          <div class="form-row">
-            <div class="form-group">
+        <div class="modal-box__body">
+          <div class="row g-3">
+            <div class="col-md-6">
               <label class="form-label" for="f-name">Name *</label>
-              <input class="form-input" id="f-name" type="text" placeholder="e.g. Sarah Chen" />
+              <input class="form-control" id="f-name" type="text" placeholder="e.g. Sarah Chen" />
             </div>
-            <div class="form-group">
+            <div class="col-md-6">
               <label class="form-label" for="f-company">Company *</label>
-              <input class="form-input" id="f-company" type="text" placeholder="e.g. Meta" />
+              <input class="form-control" id="f-company" type="text" placeholder="e.g. Meta" />
             </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-role">Their Role</label>
-            <input class="form-input" id="f-role" type="text" placeholder="e.g. University Recruiter" />
-          </div>
-          <div class="form-row">
-            <div class="form-group">
+            <div class="col-12">
+              <label class="form-label" for="f-role">Their Role</label>
+              <input class="form-control" id="f-role" type="text" placeholder="e.g. University Recruiter" />
+            </div>
+            <div class="col-md-6">
               <label class="form-label" for="f-email">Email</label>
-              <input class="form-input" id="f-email" type="email" placeholder="recruiter@company.com" />
+              <input class="form-control" id="f-email" type="email" placeholder="recruiter@company.com" />
             </div>
-            <div class="form-group">
+            <div class="col-md-6">
               <label class="form-label" for="f-phone">Phone</label>
-              <input class="form-input" id="f-phone" type="tel" placeholder="+1 (555) 000-0000" />
+              <input class="form-control" id="f-phone" type="tel" placeholder="+1 (555) 000-0000" />
             </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-linkedin">LinkedIn URL</label>
-            <input class="form-input" id="f-linkedin" type="url" placeholder="https://linkedin.com/in/…" />
-          </div>
-          <div class="form-row">
-            <div class="form-group">
+            <div class="col-12">
+              <label class="form-label" for="f-linkedin">LinkedIn URL</label>
+              <input class="form-control" id="f-linkedin" type="url" placeholder="https://linkedin.com/in/…" />
+            </div>
+            <div class="col-md-6">
               <label class="form-label" for="f-last-contact">Last Contact Date</label>
-              <input class="form-input" id="f-last-contact" type="date" />
+              <input class="form-control" id="f-last-contact" type="date" />
             </div>
-            <div class="form-group">
+            <div class="col-md-6">
               <label class="form-label" for="f-follow-up">Follow-up Date</label>
-              <input class="form-input" id="f-follow-up" type="date" />
+              <input class="form-control" id="f-follow-up" type="date" />
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="f-notes">Notes</label>
+              <textarea class="form-control" id="f-notes" rows="4" placeholder="How you met, referral status, what was discussed…"></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="f-application">Linked Application</label>
+              <select class="form-select" id="f-application">
+                <option value="">None — not linked to an application</option>
+              </select>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="f-notes">Notes</label>
-            <textarea class="form-input form-textarea" id="f-notes" rows="4"
-              placeholder="How you met, referral status, what was discussed…"></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-application">Linked Application</label>
-            <select class="form-input" id="f-application">
-              <option value="">None — not linked to an application</option>
-            </select>
-          </div>
-          <p class="form-error" id="form-error" hidden></p>
+          <div class="text-danger small mt-2" id="form-error" hidden></div>
         </div>
-
-        <div class="modal__footer">
-          <button class="btn btn--ghost" id="cancel-btn">Cancel</button>
-          <button class="btn btn--primary" id="save-btn">Save</button>
+        <div class="modal-box__footer">
+          <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
+          <button class="btn btn-primary" id="save-btn">Save</button>
         </div>
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="../js/networking.js"></script>
   </body>
 </html>
