@@ -3,8 +3,8 @@
  * Identifies rows by matching company+role text against the applications API.
  */
 
-const NET_API = '/api/networking';
-const APP_API = '/api/applications';
+const NET_API = "/api/networking";
+const APP_API = "/api/applications";
 
 let allContacts = [];
 let allApplications = [];
@@ -15,9 +15,9 @@ let currentCell = null;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 function injectStyles() {
-  if (document.getElementById('clm-styles')) return;
-  const s = document.createElement('style');
-  s.id = 'clm-styles';
+  if (document.getElementById("clm-styles")) return;
+  const s = document.createElement("style");
+  s.id = "clm-styles";
   s.textContent = `
     .contacts-link-btn {
       background: rgba(139,148,158,0.1); border: 1px solid #30363d;
@@ -64,16 +64,22 @@ function injectStyles() {
 async function loadData() {
   try {
     const [cRes, aRes] = await Promise.all([
-      fetch(NET_API, { credentials: 'include' }),
-      fetch(APP_API, { credentials: 'include' }),
+      fetch(`${NET_API}?limit=2000`, { credentials: "include" }),
+      fetch(APP_API, { credentials: "include" }),
     ]);
-    if (cRes.ok) allContacts = await cRes.json();
-    if (aRes.ok) {
-      const data = await aRes.json();
-      // Handle paginated response or plain array
-      allApplications = Array.isArray(data) ? data : (data.applications || data.data || []);
+    if (cRes.ok) {
+      const cData = await cRes.json();
+      allContacts = Array.isArray(cData) ? cData : cData.data || [];
     }
-  } catch(e) { console.warn('contacts-column: load failed', e); }
+    if (aRes.ok) {
+      const aData = await aRes.json();
+      allApplications = Array.isArray(aData)
+        ? aData
+        : aData.applications || aData.data || [];
+    }
+  } catch (e) {
+    console.warn("contacts-column: load failed", e);
+  }
 }
 
 // ─── Identify app from row ────────────────────────────────────────────────────
@@ -83,25 +89,25 @@ function getAppId(row) {
   if (row.dataset.appId) return row.dataset.appId;
 
   // Strategy 2: any button/element with data-id
-  const el = row.querySelector('[data-id]');
+  const el = row.querySelector("[data-id]");
   if (el?.dataset.id) return el.dataset.id;
 
   // Strategy 3: scan all attributes for 24-char hex (MongoDB ObjectId)
-  for (const child of row.querySelectorAll('*')) {
+  for (const child of row.querySelectorAll("*")) {
     for (const attr of child.attributes) {
       if (/^[0-9a-f]{24}$/i.test(attr.value)) return attr.value;
     }
   }
 
   // Strategy 4: match row text against applications list
-  const cells = row.querySelectorAll('td');
+  const cells = row.querySelectorAll("td");
   if (cells.length >= 2) {
     const company = cells[0]?.textContent?.trim().toLowerCase();
     const role = cells[1]?.textContent?.trim().toLowerCase();
     if (company && role) {
-      const match = allApplications.find(a =>
-        a.company?.toLowerCase() === company &&
-        a.role?.toLowerCase() === role
+      const match = allApplications.find(
+        (a) =>
+          a.company?.toLowerCase() === company && a.role?.toLowerCase() === role
       );
       if (match) return String(match._id);
     }
@@ -113,29 +119,30 @@ function getAppId(row) {
 // ─── Header ───────────────────────────────────────────────────────────────────
 function injectHeader() {
   if (headerInjected) return;
-  const headerRow = document.querySelector('#app-table thead tr');
+  const headerRow = document.querySelector("#app-table thead tr");
   if (!headerRow) return;
-  const actionsHeader = headerRow.querySelector('th:last-child');
+  const actionsHeader = headerRow.querySelector("th:last-child");
   if (!actionsHeader) return;
-  const th = document.createElement('th');
-  th.scope = 'col';
-  th.textContent = 'Contacts';
-  th.style.cssText = 'white-space:nowrap;';
+  const th = document.createElement("th");
+  th.scope = "col";
+  th.textContent = "Contacts";
+  th.style.cssText = "white-space:nowrap;";
   headerRow.insertBefore(th, actionsHeader);
   headerInjected = true;
 }
 
 // ─── Cell ─────────────────────────────────────────────────────────────────────
 function getLinked(appId) {
-  return allContacts.filter(c => c.applicationId === appId);
+  return allContacts.filter((c) => c.applicationId === appId);
 }
 
 function refreshCell(td, appId) {
   const count = getLinked(appId).length;
-  td.innerHTML = count === 0
-    ? `<button class="contacts-link-btn" data-app-id="${appId}">+ Link contact</button>`
-    : `<button class="contacts-link-btn contacts-link-btn--has" data-app-id="${appId}">${count} contact${count !== 1 ? 's' : ''}</button>`;
-  td.querySelector('.contacts-link-btn').addEventListener('click', e => {
+  td.innerHTML =
+    count === 0
+      ? `<button class="contacts-link-btn" data-app-id="${appId}">+ Link contact</button>`
+      : `<button class="contacts-link-btn contacts-link-btn--has" data-app-id="${appId}">${count} contact${count !== 1 ? "s" : ""}</button>`;
+  td.querySelector(".contacts-link-btn").addEventListener("click", (e) => {
     e.stopPropagation();
     openModal(appId, td);
   });
@@ -160,20 +167,20 @@ function injectCell(row) {
 
 function doInject(row, appId) {
   if (row.dataset.clmDone) return;
-  row.dataset.clmDone = '1';
-  const td = document.createElement('td');
-  td.className = 'clm-cell';
+  row.dataset.clmDone = "1";
+  const td = document.createElement("td");
+  td.className = "clm-cell";
   td.dataset.appId = appId;
   refreshCell(td, appId);
-  const actionsCell = row.querySelector('td:last-child');
+  const actionsCell = row.querySelector("td:last-child");
   actionsCell ? row.insertBefore(td, actionsCell) : row.appendChild(td);
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 function buildModal() {
   if (modal) return;
-  modal = document.createElement('div');
-  modal.id = 'clm-modal';
+  modal = document.createElement("div");
+  modal.id = "clm-modal";
   modal.innerHTML = `
     <div class="clm-backdrop" id="clm-backdrop"></div>
     <div class="clm-box">
@@ -192,36 +199,38 @@ function buildModal() {
     </div>
   `;
   document.body.appendChild(modal);
-  document.getElementById('clm-close').addEventListener('click', closeModal);
-  document.getElementById('clm-done').addEventListener('click', closeModal);
-  document.getElementById('clm-backdrop').addEventListener('click', closeModal);
-  document.getElementById('clm-search').addEventListener('input', e =>
-    renderList(currentAppId, e.target.value.toLowerCase())
-  );
+  document.getElementById("clm-close").addEventListener("click", closeModal);
+  document.getElementById("clm-done").addEventListener("click", closeModal);
+  document.getElementById("clm-backdrop").addEventListener("click", closeModal);
+  document
+    .getElementById("clm-search")
+    .addEventListener("input", (e) =>
+      renderList(currentAppId, e.target.value.toLowerCase())
+    );
 }
 
 function openModal(appId, cell) {
   buildModal();
   currentAppId = appId;
   currentCell = cell;
-  document.getElementById('clm-search').value = '';
-  renderList(appId, '');
-  modal.classList.add('open');
+  document.getElementById("clm-search").value = "";
+  renderList(appId, "");
+  modal.classList.add("open");
 }
 
 function closeModal() {
-  modal.classList.remove('open');
+  modal.classList.remove("open");
   if (currentCell && currentAppId) refreshCell(currentCell, currentAppId);
 }
 
 function renderList(appId, query) {
-  const list = document.getElementById('clm-list');
-  const filtered = allContacts.filter(c => {
+  const list = document.getElementById("clm-list");
+  const filtered = allContacts.filter((c) => {
     if (!query) return true;
     return (
       c.name.toLowerCase().includes(query) ||
       c.company.toLowerCase().includes(query) ||
-      (c.role || '').toLowerCase().includes(query)
+      (c.role || "").toLowerCase().includes(query)
     );
   });
 
@@ -236,58 +245,69 @@ function renderList(appId, query) {
     return 0;
   });
 
-  list.innerHTML = sorted.map(c => {
-    const linked = c.applicationId === appId;
-    return `
-      <div class="clm-item ${linked ? 'clm-item--linked' : ''}" data-cid="${c._id}">
+  list.innerHTML = sorted
+    .map((c) => {
+      const linked = c.applicationId === appId;
+      return `
+      <div class="clm-item ${linked ? "clm-item--linked" : ""}" data-cid="${c._id}">
         <div class="clm-item-left">
           <div class="clm-avatar">${c.name.charAt(0).toUpperCase()}</div>
           <div>
             <div class="clm-item-name">${c.name}</div>
-            <div class="clm-item-meta">${c.role || 'Contact'} @ ${c.company}</div>
+            <div class="clm-item-meta">${c.role || "Contact"} @ ${c.company}</div>
           </div>
         </div>
-        <span class="clm-badge ${linked ? 'clm-badge--linked' : 'clm-badge--unlinked'}">
-          ${linked ? '✓ Linked' : '+ Link'}
+        <span class="clm-badge ${linked ? "clm-badge--linked" : "clm-badge--unlinked"}">
+          ${linked ? "✓ Linked" : "+ Link"}
         </span>
       </div>`;
-  }).join('');
+    })
+    .join("");
 
-  list.querySelectorAll('.clm-item').forEach(item =>
-    item.addEventListener('click', () => toggleLink(item.dataset.cid, appId))
-  );
+  list
+    .querySelectorAll(".clm-item")
+    .forEach((item) =>
+      item.addEventListener("click", () => toggleLink(item.dataset.cid, appId))
+    );
 }
 
 async function toggleLink(contactId, appId) {
-  const contact = allContacts.find(c => String(c._id) === contactId);
+  const contact = allContacts.find((c) => String(c._id) === contactId);
   if (!contact) return;
   const newAppId = contact.applicationId === appId ? null : appId;
   try {
     const res = await fetch(`${NET_API}/${contactId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ ...contact, applicationId: newAppId }),
     });
     if (!res.ok) throw new Error();
     const updated = await res.json();
-    allContacts = allContacts.map(c => String(c._id) === contactId ? updated : c);
-    renderList(appId, document.getElementById('clm-search')?.value?.toLowerCase() || '');
-  } catch { alert('Could not update. Please try again.'); }
+    allContacts = allContacts.map((c) =>
+      String(c._id) === contactId ? updated : c
+    );
+    renderList(
+      appId,
+      document.getElementById("clm-search")?.value?.toLowerCase() || ""
+    );
+  } catch {
+    alert("Could not update. Please try again.");
+  }
 }
 
 // ─── Watch table ──────────────────────────────────────────────────────────────
 function watchTable() {
-  const tbody = document.getElementById('app-table-body');
+  const tbody = document.getElementById("app-table-body");
   if (!tbody) return;
 
   // Inject into any rows already in DOM
-  tbody.querySelectorAll('tr').forEach(injectCell);
+  tbody.querySelectorAll("tr").forEach(injectCell);
 
-  new MutationObserver(mutations => {
+  new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const node of m.addedNodes) {
-        if (node.nodeName === 'TR') injectCell(node);
+        if (node.nodeName === "TR") injectCell(node);
       }
     }
   }).observe(tbody, { childList: true });
@@ -301,8 +321,8 @@ async function init() {
   watchTable();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
 } else {
   init();
 }

@@ -10,6 +10,13 @@ const API = "/api/interviews";
 let interviews = [];
 let editingId = null;
 let activeFilter = "";
+let searchQuery = "";
+let sortColumn = "date";
+let sortDirection = "desc";
+let currentPage = 1;
+let totalPages = 1;
+let totalCount = 0;
+const PAGE_SIZE = 20;
 
 // ─── DOM refs ────────────────────────────────────────────────────────────────
 const tbody = document.getElementById("interviews-tbody");
@@ -40,13 +47,45 @@ document.getElementById("sign-out-btn").addEventListener("click", () => {
   window.location.href = "../index.html";
 });
 
-// ─── API helpers ─────────────────────────────────────────────────────────────
-async function fetchAll() {
-  const res = await fetch(API, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to load");
-  return res.json();
+// ─── Load (server-side pagination/filter/sort) ────────────────────────────────
+async function loadInterviews() {
+  const loadingRow = document.getElementById("iv-loading");
+  const emptyRow = document.getElementById("iv-empty");
+  if (loadingRow) loadingRow.hidden = false;
+  if (emptyRow) emptyRow.hidden = true;
+
+  const params = new URLSearchParams({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    sortBy: sortColumn,
+    sortDir: sortDirection,
+  });
+  if (activeFilter) params.set("status", activeFilter);
+  if (searchQuery) params.set("search", searchQuery);
+
+  try {
+    const res = await fetch(`${API}?${params}`, { credentials: "include" });
+    if (!res.ok) throw new Error("Failed to load");
+    const result = await res.json();
+    interviews = result.data;
+    totalCount = result.total;
+    totalPages = result.totalPages;
+    currentPage = result.page;
+  } catch {
+    if (loadingRow) loadingRow.hidden = true;
+    tbody
+      .querySelectorAll("tr:not(#iv-loading):not(#iv-empty)")
+      .forEach((r) => r.remove());
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-row" style="color:var(--iv-red)">Could not connect to server.</td></tr>`;
+    return;
+  }
+
+  if (loadingRow) loadingRow.hidden = true;
+  renderTable();
+  renderPagination();
 }
 
+// ─── API helpers ─────────────────────────────────────────────────────────────
 async function createOne(data) {
   const res = await fetch(API, {
     method: "POST",
@@ -113,65 +152,140 @@ function fmtDate(str) {
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function renderTable() {
-  const query = searchInput.value.toLowerCase();
+  const emptyRow = document.getElementById("iv-empty");
 
-  const filtered = interviews.filter((iv) => {
-    if (activeFilter && iv.status !== activeFilter) return false;
-    if (query) {
-      return (
-        iv.company.toLowerCase().includes(query) ||
-        iv.role.toLowerCase().includes(query)
-      );
-    }
-    return true;
+  // Update sort header indicators
+  document.querySelectorAll("#interviews-table .sortable").forEach((th) => {
+    th.setAttribute("aria-sort", "none");
+    th.querySelector(".sort-icon").textContent = "↕";
   });
+  const activeHeader = document.querySelector(
+    `#interviews-table .sortable[data-col="${sortColumn}"]`
+  );
+  if (activeHeader) {
+    activeHeader.setAttribute(
+      "aria-sort",
+      sortDirection === "asc" ? "ascending" : "descending"
+    );
+    activeHeader.querySelector(".sort-icon").textContent =
+      sortDirection === "asc" ? "↑" : "↓";
+  }
 
-  if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No interviews found. Click + Add Interview to get started!</td></tr>`;
+  // Remove old data rows, preserve sentinel rows
+  tbody
+    .querySelectorAll("tr:not(#iv-loading):not(#iv-empty)")
+    .forEach((r) => r.remove());
+
+  if (interviews.length === 0) {
+    if (emptyRow) emptyRow.hidden = false;
     return;
   }
 
-  tbody.innerHTML = filtered
-    .map(
-      (iv) => `
-      <tr class="clickable" data-id="${iv._id}">
-        <td><strong>${iv.company}</strong></td>
-        <td>${iv.role}</td>
-        <td><span class="round-tag">${iv.round}</span></td>
-        <td>${statusBadge(iv.status)}</td>
-        <td class="date-col">${fmtDate(iv.date)}</td>
-        <td>${resultBadge(iv.result)}</td>
-        <td>
-          <div class="actions-cell">
-            <button class="action-icon edit-btn" data-id="${iv._id}" title="Edit">✏️</button>
-            <button class="action-icon action-icon--delete delete-btn" data-id="${iv._id}" title="Delete">🗑️</button>
-          </div>
-        </td>
-      </tr>
-    `
+  if (emptyRow) emptyRow.hidden = true;
+
+  const fragment = document.createDocumentFragment();
+  interviews.forEach((iv) => {
+    const tr = document.createElement("tr");
+    tr.className = "clickable";
+    tr.dataset.id = iv._id;
+    tr.innerHTML = `
+      <td><strong>${iv.company}</strong></td>
+      <td>${iv.role}</td>
+      <td><span class="round-tag">${iv.round}</span></td>
+      <td>${statusBadge(iv.status)}</td>
+      <td class="date-col">${fmtDate(iv.date)}</td>
+      <td>${resultBadge(iv.result)}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="action-icon edit-btn" data-id="${iv._id}" title="Edit">✏️</button>
+          <button class="action-icon action-icon--delete delete-btn" data-id="${iv._id}" title="Delete">🗑️</button>
+        </div>
+      </td>
+    `;
+    tr.addEventListener("click", (e) => {
+      if (e.target.closest(".actions-cell")) return;
+      openNotesPanel(tr.dataset.id);
+    });
+    tr.querySelector(".edit-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openEdit(tr.dataset.id);
+    });
+    tr.querySelector(".delete-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      handleDelete(tr.dataset.id);
+    });
+    fragment.appendChild(tr);
+  });
+
+  // Insert before the empty sentinel so sentinel stays at end
+  const emptyEl = document.getElementById("iv-empty");
+  tbody.insertBefore(fragment, emptyEl);
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+function buildPageRange(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages = [];
+  const delta = 2;
+  const left = current - delta;
+  const right = current + delta;
+
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= left && i <= right)) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== "...") {
+      pages.push("...");
+    }
+  }
+  return pages;
+}
+
+function renderPagination() {
+  const nav = document.getElementById("iv-pagination");
+  if (!nav) return;
+
+  if (totalPages <= 1) {
+    nav.innerHTML = "";
+    return;
+  }
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, totalCount);
+
+  const pages = buildPageRange(currentPage, totalPages);
+  const pageButtons = pages
+    .map((p) =>
+      p === "..."
+        ? `<li class="page-item disabled"><span class="page-link">…</span></li>`
+        : `<li class="page-item ${p === currentPage ? "active" : ""}">
+             <button class="page-link" data-page="${p}">${p}</button>
+           </li>`
     )
     .join("");
 
-  tbody.querySelectorAll("tr.clickable").forEach((row) => {
-    row.addEventListener("click", (e) => {
-      if (e.target.closest(".actions-cell")) return;
-      openNotesPanel(row.dataset.id);
+  nav.innerHTML = `
+    <div class="pagination-info">Showing ${start}–${end} of ${totalCount}</div>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+        <button class="page-link" data-page="${currentPage - 1}">‹ Prev</button>
+      </li>
+      ${pageButtons}
+      <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
+        <button class="page-link" data-page="${currentPage + 1}">Next ›</button>
+      </li>
+    </ul>
+  `;
+
+  nav.querySelectorAll("[data-page]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const page = parseInt(btn.dataset.page);
+      if (page >= 1 && page <= totalPages && page !== currentPage) {
+        currentPage = page;
+        loadInterviews();
+      }
     });
   });
-
-  tbody.querySelectorAll(".edit-btn").forEach((btn) =>
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      openEdit(btn.dataset.id);
-    })
-  );
-
-  tbody.querySelectorAll(".delete-btn").forEach((btn) =>
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      handleDelete(btn.dataset.id);
-    })
-  );
 }
 
 // ─── Notes Panel ─────────────────────────────────────────────────────────────
@@ -253,16 +367,12 @@ async function handleSave() {
   }
   try {
     if (editingId) {
-      const updated = await updateOne(editingId, data);
-      interviews = interviews.map((iv) =>
-        String(iv._id) === editingId ? updated : iv
-      );
+      await updateOne(editingId, data);
     } else {
-      const created = await createOne(data);
-      interviews.unshift(created);
+      await createOne(data);
     }
     closeModal();
-    renderTable();
+    await loadInterviews();
   } catch (err) {
     formError.textContent = err.message;
     formError.hidden = false;
@@ -273,8 +383,8 @@ async function handleDelete(id) {
   if (!confirm("Delete this interview record?")) return;
   try {
     await deleteOne(id);
-    interviews = interviews.filter((iv) => String(iv._id) !== id);
-    renderTable();
+    if (interviews.length === 1 && currentPage > 1) currentPage--;
+    await loadInterviews();
   } catch (err) {
     alert(err.message);
   }
@@ -282,13 +392,7 @@ async function handleDelete(id) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
-  try {
-    interviews = await fetchAll();
-  } catch {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-row" style="color:var(--red)">Could not connect to server.</td></tr>`;
-    return;
-  }
-  renderTable();
+  await loadInterviews();
 }
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
@@ -302,8 +406,19 @@ document.getElementById("panel-close").addEventListener("click", () => {
 overlay.addEventListener("click", (e) => {
   if (e.target === overlay) closeModal();
 });
-searchInput.addEventListener("input", renderTable);
 
+// Search — debounced 300 ms
+let searchTimer = null;
+searchInput.addEventListener("input", (e) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchQuery = e.target.value.trim();
+    currentPage = 1;
+    loadInterviews();
+  }, 300);
+});
+
+// Filter pills
 document.querySelectorAll(".filter-pill").forEach((pill) => {
   pill.addEventListener("click", () => {
     document
@@ -311,8 +426,26 @@ document.querySelectorAll(".filter-pill").forEach((pill) => {
       .forEach((p) => p.classList.remove("filter-pill--active"));
     pill.classList.add("filter-pill--active");
     activeFilter = pill.dataset.filter;
-    renderTable();
+    currentPage = 1;
+    loadInterviews();
   });
 });
+
+// Column sorting
+document
+  .querySelector("#interviews-table thead")
+  .addEventListener("click", (e) => {
+    const th = e.target.closest(".sortable");
+    if (!th) return;
+    const col = th.dataset.col;
+    if (sortColumn === col) {
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      sortColumn = col;
+      sortDirection = "asc";
+    }
+    currentPage = 1;
+    loadInterviews();
+  });
 
 init();

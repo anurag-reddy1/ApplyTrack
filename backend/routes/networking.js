@@ -1,6 +1,6 @@
 import { Router } from "express";
+import { getDB } from "../config/db.js";
 import {
-  getAllContacts,
   getContactById,
   createContact,
   updateContact,
@@ -11,8 +11,76 @@ const router = Router();
 
 router.get("/", async (req, res) => {
   try {
-    const contacts = await getAllContacts();
-    res.json(contacts);
+    const {
+      search,
+      page = "1",
+      limit = "20",
+      sortBy = "followUpDate",
+      sortDir = "asc",
+    } = req.query;
+
+    const db = getDB();
+    const contacts = db.collection("networking");
+
+    const filter = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { company: { $regex: search, $options: "i" } },
+        { role: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(2000, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const SORTABLE_FIELDS = [
+      "name",
+      "company",
+      "role",
+      "lastContact",
+      "followUpDate",
+    ];
+    const sortField = SORTABLE_FIELDS.includes(sortBy)
+      ? sortBy
+      : "followUpDate";
+    const sortOrder = sortDir === "asc" ? 1 : -1;
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const [docs, total, statsTotal, statsFollowupDue, statsRecentThisMonth] =
+      await Promise.all([
+        contacts
+          .find(filter)
+          .sort({ [sortField]: sortOrder })
+          .skip(skip)
+          .limit(limitNum)
+          .toArray(),
+        contacts.countDocuments(filter),
+        contacts.countDocuments({}),
+        contacts.countDocuments({
+          followUpDate: { $ne: null, $lt: now },
+        }),
+        contacts.countDocuments({
+          lastContact: { $gte: startOfMonth, $lt: startOfNextMonth },
+        }),
+      ]);
+
+    return res.status(200).json({
+      data: docs,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+      stats: {
+        total: statsTotal,
+        followupDue: statsFollowupDue,
+        recentThisMonth: statsRecentThisMonth,
+      },
+    });
     // eslint-disable-next-line no-unused-vars
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch contacts" });

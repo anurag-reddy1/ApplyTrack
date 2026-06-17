@@ -2,7 +2,7 @@ import { requireAuth, clearSession } from "./modules/storage.js";
 
 const session = requireAuth();
 if (!session) throw new Error("Not authenticated.");
-const { username } = session;
+const { username, userId } = session;
 
 const API = "/api/networking";
 const APPS_API = "/api/applications";
@@ -12,6 +12,13 @@ let contacts = [];
 let applications = [];
 let editingId = null;
 let activeFilter = "";
+let searchQuery = "";
+let sortColumn = "followUpDate";
+let sortDirection = "asc";
+let currentPage = 1;
+let totalPages = 1;
+let totalCount = 0;
+const PAGE_SIZE = 20;
 
 // ─── DOM refs ────────────────────────────────────────────────────────────────
 const tbody = document.getElementById("contacts-tbody");
@@ -40,18 +47,54 @@ document.getElementById("sign-out-btn").addEventListener("click", () => {
   window.location.href = "../index.html";
 });
 
-// ─── API helpers ─────────────────────────────────────────────────────────────
-async function fetchAll() {
-  const res = await fetch(API, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to load");
-  return res.json();
+// ─── Load (server-side pagination/filter/sort) ────────────────────────────────
+async function loadContacts() {
+  const loadingRow = document.getElementById("nw-loading");
+  const emptyRow = document.getElementById("nw-empty");
+  if (loadingRow) loadingRow.hidden = false;
+  if (emptyRow) emptyRow.hidden = true;
+
+  const params = new URLSearchParams({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    sortBy: sortColumn,
+    sortDir: sortDirection,
+  });
+  if (searchQuery) params.set("search", searchQuery);
+
+  try {
+    const res = await fetch(`${API}?${params}`, { credentials: "include" });
+    if (!res.ok) throw new Error("Failed to load");
+    const result = await res.json();
+    contacts = result.data;
+    totalCount = result.total;
+    totalPages = result.totalPages;
+    currentPage = result.page;
+    if (result.stats) updateStats(result.stats);
+  } catch {
+    if (loadingRow) loadingRow.hidden = true;
+    tbody
+      .querySelectorAll("tr:not(#nw-loading):not(#nw-empty)")
+      .forEach((r) => r.remove());
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-row" style="color:var(--nw-red)">Could not connect to server.</td></tr>`;
+    return;
+  }
+
+  if (loadingRow) loadingRow.hidden = true;
+  renderTable();
+  renderPagination();
 }
 
+// ─── API helpers ─────────────────────────────────────────────────────────────
 async function fetchApplications() {
   try {
-    const res = await fetch(APPS_API, { credentials: "include" });
+    if (!userId) return [];
+    const res = await fetch(`${APPS_API}?userId=${userId}&limit=100`, {
+      credentials: "include",
+    });
     if (!res.ok) return [];
-    return res.json();
+    const result = await res.json();
+    return result.data || result;
   } catch {
     return [];
   }
@@ -122,6 +165,7 @@ function isOverdue(str) {
   return new Date(str) < new Date();
 }
 
+// eslint-disable-next-line no-unused-vars
 function thisMonth(str) {
   if (!str) return false;
   const d = new Date(str);
@@ -138,86 +182,163 @@ function getAppName(applicationId) {
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
-function updateStats() {
-  document.getElementById("stat-total").textContent = contacts.length;
-  document.getElementById("stat-followup").textContent = contacts.filter((c) =>
-    isOverdue(c.followUpDate)
-  ).length;
-  document.getElementById("stat-recent").textContent = contacts.filter((c) =>
-    thisMonth(c.lastContact)
-  ).length;
+function updateStats(stats) {
+  document.getElementById("stat-total").textContent = stats.total;
+  document.getElementById("stat-followup").textContent = stats.followupDue;
+  document.getElementById("stat-recent").textContent = stats.recentThisMonth;
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function renderTable() {
-  const query = searchInput.value.toLowerCase();
+  const emptyRow = document.getElementById("nw-empty");
 
-  const filtered = contacts.filter((c) => {
-    if (activeFilter) {
-      if (!(c.role || "").toLowerCase().includes(activeFilter.toLowerCase()))
-        return false;
-    }
-    if (query) {
-      return (
-        c.name.toLowerCase().includes(query) ||
-        c.company.toLowerCase().includes(query) ||
-        (c.role || "").toLowerCase().includes(query)
-      );
-    }
-    return true;
+  // Update sort header indicators
+  document.querySelectorAll("#contacts-table .sortable").forEach((th) => {
+    th.setAttribute("aria-sort", "none");
+    th.querySelector(".sort-icon").textContent = "↕";
   });
+  const activeHeader = document.querySelector(
+    `#contacts-table .sortable[data-col="${sortColumn}"]`
+  );
+  if (activeHeader) {
+    activeHeader.setAttribute(
+      "aria-sort",
+      sortDirection === "asc" ? "ascending" : "descending"
+    );
+    activeHeader.querySelector(".sort-icon").textContent =
+      sortDirection === "asc" ? "↑" : "↓";
+  }
 
-  if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No contacts found. Click + Add Contact to start networking!</td></tr>`;
+  // Remove old data rows, preserve sentinel rows
+  tbody
+    .querySelectorAll("tr:not(#nw-loading):not(#nw-empty)")
+    .forEach((r) => r.remove());
+
+  // Apply client-side role filter (filter pills are role-based, not sent to server)
+  const visible = activeFilter
+    ? contacts.filter((c) =>
+        (c.role || "").toLowerCase().includes(activeFilter.toLowerCase())
+      )
+    : contacts;
+
+  if (visible.length === 0) {
+    if (emptyRow) emptyRow.hidden = false;
     return;
   }
 
-  tbody.innerHTML = filtered
-    .map((c) => {
-      const overdue = isOverdue(c.followUpDate);
-      const appName = getAppName(c.applicationId);
-      return `
-      <tr class="${overdue ? "overdue" : ""}" data-id="${c._id}">
-        <td>
-          <div class="name-cell">
-            <div class="contact-avatar">${c.name.charAt(0).toUpperCase()}</div>
-            <div>
-              <strong>${c.name}</strong>
-              ${appName ? `<div style="font-size:0.72rem;color:#58a6ff;margin-top:0.1rem">🔗 ${appName}</div>` : ""}
-            </div>
+  if (emptyRow) emptyRow.hidden = true;
+
+  const fragment = document.createDocumentFragment();
+  visible.forEach((c) => {
+    const overdue = isOverdue(c.followUpDate);
+    const appName = getAppName(c.applicationId);
+    const tr = document.createElement("tr");
+    if (overdue) tr.className = "overdue";
+    tr.dataset.id = c._id;
+    tr.innerHTML = `
+      <td>
+        <div class="name-cell">
+          <div class="contact-avatar">${c.name.charAt(0).toUpperCase()}</div>
+          <div>
+            <strong>${c.name}</strong>
+            ${appName ? `<div style="font-size:0.72rem;color:#58a6ff;margin-top:0.1rem">🔗 ${appName}</div>` : ""}
           </div>
-        </td>
-        <td>${c.company}</td>
-        <td>${c.role || "—"}</td>
-        <td>
-          ${c.email ? `<a href="mailto:${c.email}" class="contact-link">${c.email}</a>` : "—"}
-          ${c.linkedin ? `<br><a href="${c.linkedin}" target="_blank" rel="noopener noreferrer" class="contact-link">LinkedIn ↗</a>` : ""}
-        </td>
-        <td style="white-space:nowrap;font-size:0.8rem;color:var(--text-muted)">${fmtDate(c.lastContact)}</td>
-        <td style="white-space:nowrap;font-size:0.8rem" class="${overdue ? "overdue-label" : ""}">
-          ${fmtDate(c.followUpDate)}${overdue ? " ⚠" : ""}
-        </td>
-        <td>
-          <div class="actions-cell">
-            <button class="action-icon edit-btn" data-id="${c._id}" title="Edit">✏️</button>
-            <button class="action-icon action-icon--delete delete-btn" data-id="${c._id}" title="Delete">🗑️</button>
-          </div>
-        </td>
-      </tr>
+        </div>
+      </td>
+      <td>${c.company}</td>
+      <td>${c.role || "—"}</td>
+      <td>
+        ${c.email ? `<a href="mailto:${c.email}" class="contact-link">${c.email}</a>` : "—"}
+        ${c.linkedin ? `<br><a href="${c.linkedin}" target="_blank" rel="noopener noreferrer" class="contact-link">LinkedIn ↗</a>` : ""}
+      </td>
+      <td style="white-space:nowrap;font-size:0.8rem;color:var(--text-muted)">${fmtDate(c.lastContact)}</td>
+      <td style="white-space:nowrap;font-size:0.8rem" class="${overdue ? "overdue-label" : ""}">
+        ${fmtDate(c.followUpDate)}${overdue ? " ⚠" : ""}
+      </td>
+      <td>
+        <div class="actions-cell">
+          <button class="action-icon edit-btn" data-id="${c._id}" title="Edit">✏️</button>
+          <button class="action-icon action-icon--delete delete-btn" data-id="${c._id}" title="Delete">🗑️</button>
+        </div>
+      </td>
     `;
-    })
+    tr.querySelector(".edit-btn").addEventListener("click", () =>
+      openEdit(tr.dataset.id)
+    );
+    tr.querySelector(".delete-btn").addEventListener("click", () =>
+      handleDelete(tr.dataset.id)
+    );
+    fragment.appendChild(tr);
+  });
+
+  const emptyEl = document.getElementById("nw-empty");
+  tbody.insertBefore(fragment, emptyEl);
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+function buildPageRange(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages = [];
+  const delta = 2;
+  const left = current - delta;
+  const right = current + delta;
+
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= left && i <= right)) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== "...") {
+      pages.push("...");
+    }
+  }
+  return pages;
+}
+
+function renderPagination() {
+  const nav = document.getElementById("nw-pagination");
+  if (!nav) return;
+
+  if (totalPages <= 1) {
+    nav.innerHTML = "";
+    return;
+  }
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, totalCount);
+
+  const pages = buildPageRange(currentPage, totalPages);
+  const pageButtons = pages
+    .map((p) =>
+      p === "..."
+        ? `<li class="page-item disabled"><span class="page-link">…</span></li>`
+        : `<li class="page-item ${p === currentPage ? "active" : ""}">
+             <button class="page-link" data-page="${p}">${p}</button>
+           </li>`
+    )
     .join("");
 
-  tbody
-    .querySelectorAll(".edit-btn")
-    .forEach((btn) =>
-      btn.addEventListener("click", () => openEdit(btn.dataset.id))
-    );
-  tbody
-    .querySelectorAll(".delete-btn")
-    .forEach((btn) =>
-      btn.addEventListener("click", () => handleDelete(btn.dataset.id))
-    );
+  nav.innerHTML = `
+    <div class="pagination-info">Showing ${start}–${end} of ${totalCount}</div>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+        <button class="page-link" data-page="${currentPage - 1}">‹ Prev</button>
+      </li>
+      ${pageButtons}
+      <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
+        <button class="page-link" data-page="${currentPage + 1}">Next ›</button>
+      </li>
+    </ul>
+  `;
+
+  nav.querySelectorAll("[data-page]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const page = parseInt(btn.dataset.page);
+      if (page >= 1 && page <= totalPages && page !== currentPage) {
+        currentPage = page;
+        loadContacts();
+      }
+    });
+  });
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -283,17 +404,12 @@ async function handleSave() {
   }
   try {
     if (editingId) {
-      const updated = await updateOne(editingId, data);
-      contacts = contacts.map((c) =>
-        String(c._id) === editingId ? updated : c
-      );
+      await updateOne(editingId, data);
     } else {
-      const created = await createOne(data);
-      contacts.unshift(created);
+      await createOne(data);
     }
     closeModal();
-    updateStats();
-    renderTable();
+    await loadContacts();
   } catch (err) {
     formError.textContent = err.message;
     formError.hidden = false;
@@ -304,9 +420,8 @@ async function handleDelete(id) {
   if (!confirm("Remove this contact?")) return;
   try {
     await deleteOne(id);
-    contacts = contacts.filter((c) => String(c._id) !== id);
-    updateStats();
-    renderTable();
+    if (contacts.length === 1 && currentPage > 1) currentPage--;
+    await loadContacts();
   } catch (err) {
     alert(err.message);
   }
@@ -314,17 +429,8 @@ async function handleDelete(id) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
-  try {
-    [contacts, applications] = await Promise.all([
-      fetchAll(),
-      fetchApplications(),
-    ]);
-  } catch {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-row" style="color:var(--red)">Could not connect to server.</td></tr>`;
-    return;
-  }
-  updateStats();
-  renderTable();
+  applications = await fetchApplications();
+  await loadContacts();
 }
 
 // ─── Events ───────────────────────────────────────────────────────────────────
@@ -335,8 +441,19 @@ document.getElementById("modal-close").addEventListener("click", closeModal);
 overlay.addEventListener("click", (e) => {
   if (e.target === overlay) closeModal();
 });
-searchInput.addEventListener("input", renderTable);
 
+// Search — debounced 300 ms
+let searchTimer = null;
+searchInput.addEventListener("input", (e) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchQuery = e.target.value.trim();
+    currentPage = 1;
+    loadContacts();
+  }, 300);
+});
+
+// Filter pills (role-based, client-side within current page)
 document.querySelectorAll(".filter-pill").forEach((pill) => {
   pill.addEventListener("click", () => {
     document
@@ -347,5 +464,22 @@ document.querySelectorAll(".filter-pill").forEach((pill) => {
     renderTable();
   });
 });
+
+// Column sorting
+document
+  .querySelector("#contacts-table thead")
+  .addEventListener("click", (e) => {
+    const th = e.target.closest(".sortable");
+    if (!th) return;
+    const col = th.dataset.col;
+    if (sortColumn === col) {
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      sortColumn = col;
+      sortDirection = "asc";
+    }
+    currentPage = 1;
+    loadContacts();
+  });
 
 init();

@@ -62,23 +62,23 @@
           <table class="table table-hover mb-0" id="contacts-table">
             <thead>
               <tr>
-                <th>NAME</th>
-                <th>COMPANY</th>
-                <th>ROLE</th>
+                <th class="sortable" data-col="name">NAME <span class="sort-icon">↕</span></th>
+                <th class="sortable" data-col="company">COMPANY <span class="sort-icon">↕</span></th>
+                <th class="sortable" data-col="role">ROLE <span class="sort-icon">↕</span></th>
                 <th>EMAIL</th>
-                <th>LAST CONTACT</th>
-                <th>FOLLOW-UP</th>
+                <th class="sortable" data-col="lastContact">LAST CONTACT <span class="sort-icon">↕</span></th>
+                <th class="sortable" data-col="followUpDate">FOLLOW-UP <span class="sort-icon">↑</span></th>
                 <th>ACTIONS</th>
               </tr>
             </thead>
             <tbody id="contacts-tbody">
-              <tr>
-                <td colspan="7" class="empty-row">Loading contacts…</td>
-              </tr>
+              <tr id="nw-loading"><td colspan="7" class="empty-row">Loading…</td></tr>
+              <tr id="nw-empty" hidden><td colspan="7" class="empty-row">No contacts found.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
+      <div id="nw-pagination" class="pagination-nav mt-3"></div>
     </main>
 
     <!-- Modal -->
