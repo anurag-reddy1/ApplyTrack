@@ -1,11 +1,13 @@
 /**
- * contacts-column.js
- * Injects a "Contacts" column into the dashboard applications table.
- * Uses MutationObserver so it works regardless of when Anurag's code renders rows.
+ * contacts-column.js — Injects a "Contacts" column into the dashboard table.
+ * Identifies rows by matching company+role text against the applications API.
  */
 
 const NET_API = '/api/networking';
+const APP_API = '/api/applications';
+
 let allContacts = [];
+let allApplications = [];
 let headerInjected = false;
 let modal = null;
 let currentAppId = null;
@@ -13,228 +15,102 @@ let currentCell = null;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 function injectStyles() {
-  const style = document.createElement('style');
-  style.textContent = `
-    /* ── Link button in table ── */
+  if (document.getElementById('clm-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'clm-styles';
+  s.textContent = `
     .contacts-link-btn {
-      background: rgba(139,148,158,0.1);
-      border: 1px solid #30363d;
-      color: #8b949e;
-      font-size: 0.72rem;
-      font-weight: 600;
-      padding: 0.22rem 0.65rem;
-      border-radius: 9999px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.15s;
-      letter-spacing: 0.02em;
+      background: rgba(139,148,158,0.1); border: 1px solid #30363d;
+      color: #8b949e; font-size: 0.72rem; font-weight: 600;
+      padding: 0.22rem 0.65rem; border-radius: 9999px; cursor: pointer;
+      white-space: nowrap; transition: all 0.15s; letter-spacing: 0.02em;
     }
-    .contacts-link-btn:hover {
-      background: #1c2128;
-      color: #e6edf3;
-      border-color: #2563eb;
-    }
-    .contacts-link-btn--has {
-      background: rgba(37,99,235,0.15);
-      border-color: #2563eb;
-      color: #58a6ff;
-    }
-    .contacts-link-btn--has:hover {
-      background: rgba(37,99,235,0.28);
-    }
-
-    /* ── Modal overlay ── */
-    #clm-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    #clm-modal.open { display: flex; }
-    .clm-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(1, 4, 9, 0.78);
-    }
-    .clm-box {
-      position: relative;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 500px;
-      max-height: 82vh;
-      display: flex;
-      flex-direction: column;
-      margin: 1rem;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.4);
-    }
-    .clm-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.2rem 1.5rem;
-      border-bottom: 1px solid #21262d;
-      flex-shrink: 0;
-    }
-    .clm-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #e6edf3;
-      margin: 0;
-    }
-    .clm-close {
-      background: none;
-      border: none;
-      color: #8b949e;
-      font-size: 1rem;
-      cursor: pointer;
-      padding: 0.25rem 0.4rem;
-      border-radius: 6px;
-      line-height: 1;
-      transition: background 0.15s;
-    }
-    .clm-close:hover { background: #21262d; color: #e6edf3; }
-    .clm-sub {
-      font-size: 0.8rem;
-      color: #8b949e;
-      padding: 0.8rem 1.5rem 0;
-      margin: 0;
-    }
-    .clm-search-wrap {
-      padding: 0.75rem 1.5rem;
-      flex-shrink: 0;
-    }
-    .clm-search {
-      width: 100%;
-      padding: 0.45rem 0.8rem;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      color: #e6edf3;
-      font-size: 0.875rem;
-    }
-    .clm-search:focus { outline: none; border-color: #2563eb; }
-    .clm-list {
-      overflow-y: auto;
-      padding: 0 1rem 0.75rem;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.45rem;
-    }
-    .clm-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.85rem 1rem;
-      border: 1px solid #21262d;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #0d1117;
-      transition: background 0.15s, border-color 0.15s;
-      gap: 0.75rem;
-    }
-    .clm-item:hover { background: #1c2128; }
-    .clm-item--linked {
-      border-color: #2563eb;
-      background: rgba(37,99,235,0.07);
-    }
-    .clm-item--linked:hover { background: rgba(37,99,235,0.12); }
-    .clm-item-left { display: flex; align-items: center; gap: 0.65rem; }
-    .clm-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #2563eb;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-    .clm-item-name {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #e6edf3;
-    }
-    .clm-item-meta {
-      font-size: 0.75rem;
-      color: #8b949e;
-      margin-top: 0.1rem;
-    }
-    .clm-badge {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 0.22rem 0.65rem;
-      border-radius: 9999px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .clm-badge--linked { background: rgba(37,99,235,0.2); color: #58a6ff; }
-    .clm-badge--unlinked { background: #21262d; color: #8b949e; }
-    .clm-empty {
-      text-align: center;
-      color: #8b949e;
-      padding: 2.5rem 1rem;
-      font-size: 0.875rem;
-    }
-    .clm-footer {
-      padding: 1rem 1.5rem;
-      border-top: 1px solid #21262d;
-      display: flex;
-      justify-content: flex-end;
-      flex-shrink: 0;
-    }
-    .clm-done {
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1.4rem;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .clm-done:hover { background: #1d4ed8; }
-    .clm-spinner {
-      text-align: center;
-      color: #8b949e;
-      padding: 1.5rem;
-      font-size: 0.8rem;
-    }
+    .contacts-link-btn:hover { background: #1c2128; color: #e6edf3; border-color: #2563eb; }
+    .contacts-link-btn--has { background: rgba(37,99,235,0.15); border-color: #2563eb; color: #58a6ff; }
+    .contacts-link-btn--has:hover { background: rgba(37,99,235,0.28); }
+    #clm-modal { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; }
+    #clm-modal.open { display:flex; }
+    .clm-backdrop { position:absolute; inset:0; background:rgba(1,4,9,0.78); }
+    .clm-box { position:relative; background:#161b22; border:1px solid #30363d; border-radius:12px; width:100%; max-width:500px; max-height:82vh; display:flex; flex-direction:column; margin:1rem; box-shadow:0 24px 80px rgba(0,0,0,0.4); }
+    .clm-header { display:flex; align-items:center; justify-content:space-between; padding:1.2rem 1.5rem; border-bottom:1px solid #21262d; flex-shrink:0; }
+    .clm-title { font-size:1rem; font-weight:700; color:#e6edf3; margin:0; }
+    .clm-close { background:none; border:none; color:#8b949e; font-size:1rem; cursor:pointer; padding:0.25rem 0.4rem; border-radius:6px; }
+    .clm-close:hover { background:#21262d; color:#e6edf3; }
+    .clm-sub { font-size:0.8rem; color:#8b949e; padding:0.8rem 1.5rem 0; margin:0; }
+    .clm-search-wrap { padding:0.75rem 1.5rem; flex-shrink:0; }
+    .clm-search { width:100%; padding:0.45rem 0.8rem; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#e6edf3; font-size:0.875rem; }
+    .clm-search:focus { outline:none; border-color:#2563eb; }
+    .clm-list { overflow-y:auto; padding:0 1rem 0.75rem; flex:1; display:flex; flex-direction:column; gap:0.45rem; }
+    .clm-item { display:flex; align-items:center; justify-content:space-between; padding:0.85rem 1rem; border:1px solid #21262d; border-radius:8px; cursor:pointer; background:#0d1117; transition:background 0.15s,border-color 0.15s; gap:0.75rem; }
+    .clm-item:hover { background:#1c2128; }
+    .clm-item--linked { border-color:#2563eb; background:rgba(37,99,235,0.07); }
+    .clm-item--linked:hover { background:rgba(37,99,235,0.12); }
+    .clm-item-left { display:flex; align-items:center; gap:0.65rem; }
+    .clm-avatar { width:32px; height:32px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; flex-shrink:0; }
+    .clm-item-name { font-size:0.875rem; font-weight:600; color:#e6edf3; }
+    .clm-item-meta { font-size:0.75rem; color:#8b949e; margin-top:0.1rem; }
+    .clm-badge { font-size:0.7rem; font-weight:600; padding:0.22rem 0.65rem; border-radius:9999px; white-space:nowrap; flex-shrink:0; }
+    .clm-badge--linked { background:rgba(37,99,235,0.2); color:#58a6ff; }
+    .clm-badge--unlinked { background:#21262d; color:#8b949e; }
+    .clm-empty { text-align:center; color:#8b949e; padding:2.5rem 1rem; font-size:0.875rem; }
+    .clm-footer { padding:1rem 1.5rem; border-top:1px solid #21262d; display:flex; justify-content:flex-end; flex-shrink:0; }
+    .clm-done { background:#2563eb; color:#fff; border:none; padding:0.5rem 1.4rem; border-radius:6px; font-size:0.875rem; font-weight:600; cursor:pointer; }
+    .clm-done:hover { background:#1d4ed8; }
   `;
-  document.head.appendChild(style);
+  document.head.appendChild(s);
 }
 
-// ─── Load contacts ────────────────────────────────────────────────────────────
-async function loadContacts() {
+// ─── Load data ────────────────────────────────────────────────────────────────
+async function loadData() {
   try {
-    const res = await fetch(NET_API, { credentials: 'include' });
-    if (res.ok) allContacts = await res.json();
-  } catch { /* silent */ }
+    const [cRes, aRes] = await Promise.all([
+      fetch(NET_API, { credentials: 'include' }),
+      fetch(APP_API, { credentials: 'include' }),
+    ]);
+    if (cRes.ok) allContacts = await cRes.json();
+    if (aRes.ok) {
+      const data = await aRes.json();
+      // Handle paginated response or plain array
+      allApplications = Array.isArray(data) ? data : (data.applications || data.data || []);
+    }
+  } catch(e) { console.warn('contacts-column: load failed', e); }
 }
 
-// ─── Get application ID from a table row ──────────────────────────────────────
+// ─── Identify app from row ────────────────────────────────────────────────────
 function getAppId(row) {
+  // Strategy 1: data-id directly on row
   if (row.dataset.id) return row.dataset.id;
   if (row.dataset.appId) return row.dataset.appId;
-  // Try action buttons (edit/delete usually have data-id)
-  const btn = row.querySelector('[data-id]');
-  return btn?.dataset.id ?? null;
+
+  // Strategy 2: any button/element with data-id
+  const el = row.querySelector('[data-id]');
+  if (el?.dataset.id) return el.dataset.id;
+
+  // Strategy 3: scan all attributes for 24-char hex (MongoDB ObjectId)
+  for (const child of row.querySelectorAll('*')) {
+    for (const attr of child.attributes) {
+      if (/^[0-9a-f]{24}$/i.test(attr.value)) return attr.value;
+    }
+  }
+
+  // Strategy 4: match row text against applications list
+  const cells = row.querySelectorAll('td');
+  if (cells.length >= 2) {
+    const company = cells[0]?.textContent?.trim().toLowerCase();
+    const role = cells[1]?.textContent?.trim().toLowerCase();
+    if (company && role) {
+      const match = allApplications.find(a =>
+        a.company?.toLowerCase() === company &&
+        a.role?.toLowerCase() === role
+      );
+      if (match) return String(match._id);
+    }
+  }
+
+  return null;
 }
 
-// ─── Get contacts linked to an application ────────────────────────────────────
-function getLinked(appId) {
-  return allContacts.filter(c => c.applicationId === appId);
-}
-
-// ─── Inject column header ─────────────────────────────────────────────────────
+// ─── Header ───────────────────────────────────────────────────────────────────
 function injectHeader() {
   if (headerInjected) return;
   const headerRow = document.querySelector('#app-table thead tr');
@@ -249,22 +125,9 @@ function injectHeader() {
   headerInjected = true;
 }
 
-// ─── Inject contact cell into a row ──────────────────────────────────────────
-function injectCell(row) {
-  if (row.dataset.clmDone) return;
-  row.dataset.clmDone = '1';
-
-  const appId = getAppId(row);
-  if (!appId) return;
-
-  const td = document.createElement('td');
-  td.className = 'clm-cell';
-  td.dataset.appId = appId;
-
-  refreshCell(td, appId);
-
-  const actionsCell = row.querySelector('td:last-child');
-  actionsCell ? row.insertBefore(td, actionsCell) : row.appendChild(td);
+// ─── Cell ─────────────────────────────────────────────────────────────────────
+function getLinked(appId) {
+  return allContacts.filter(c => c.applicationId === appId);
 }
 
 function refreshCell(td, appId) {
@@ -272,14 +135,41 @@ function refreshCell(td, appId) {
   td.innerHTML = count === 0
     ? `<button class="contacts-link-btn" data-app-id="${appId}">+ Link contact</button>`
     : `<button class="contacts-link-btn contacts-link-btn--has" data-app-id="${appId}">${count} contact${count !== 1 ? 's' : ''}</button>`;
-
   td.querySelector('.contacts-link-btn').addEventListener('click', e => {
     e.stopPropagation();
     openModal(appId, td);
   });
 }
 
-// ─── Build modal (once) ───────────────────────────────────────────────────────
+function injectCell(row) {
+  if (row.dataset.clmDone) return;
+
+  const appId = getAppId(row);
+  if (!appId) {
+    // Retry once after a short delay (row text may not be rendered yet)
+    setTimeout(() => {
+      if (row.dataset.clmDone) return;
+      const retryId = getAppId(row);
+      if (!retryId) return;
+      doInject(row, retryId);
+    }, 300);
+    return;
+  }
+  doInject(row, appId);
+}
+
+function doInject(row, appId) {
+  if (row.dataset.clmDone) return;
+  row.dataset.clmDone = '1';
+  const td = document.createElement('td');
+  td.className = 'clm-cell';
+  td.dataset.appId = appId;
+  refreshCell(td, appId);
+  const actionsCell = row.querySelector('td:last-child');
+  actionsCell ? row.insertBefore(td, actionsCell) : row.appendChild(td);
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
 function buildModal() {
   if (modal) return;
   modal = document.createElement('div');
@@ -302,13 +192,12 @@ function buildModal() {
     </div>
   `;
   document.body.appendChild(modal);
-
   document.getElementById('clm-close').addEventListener('click', closeModal);
   document.getElementById('clm-done').addEventListener('click', closeModal);
   document.getElementById('clm-backdrop').addEventListener('click', closeModal);
-  document.getElementById('clm-search').addEventListener('input', e => {
-    renderList(currentAppId, e.target.value.toLowerCase());
-  });
+  document.getElementById('clm-search').addEventListener('input', e =>
+    renderList(currentAppId, e.target.value.toLowerCase())
+  );
 }
 
 function openModal(appId, cell) {
@@ -322,15 +211,11 @@ function openModal(appId, cell) {
 
 function closeModal() {
   modal.classList.remove('open');
-  if (currentCell && currentAppId) {
-    refreshCell(currentCell, currentAppId);
-  }
+  if (currentCell && currentAppId) refreshCell(currentCell, currentAppId);
 }
 
-// ─── Render contact list inside modal ─────────────────────────────────────────
 function renderList(appId, query) {
   const list = document.getElementById('clm-list');
-
   const filtered = allContacts.filter(c => {
     if (!query) return true;
     return (
@@ -341,11 +226,10 @@ function renderList(appId, query) {
   });
 
   if (filtered.length === 0) {
-    list.innerHTML = `<div class="clm-empty">No contacts found.<br>Add contacts on the Networking page first.</div>`;
+    list.innerHTML = `<div class="clm-empty">No contacts yet.<br>Add them on the Networking page first.</div>`;
     return;
   }
 
-  // Sort: linked to this app first, then rest
   const sorted = [...filtered].sort((a, b) => {
     if (a.applicationId === appId && b.applicationId !== appId) return -1;
     if (b.applicationId === appId && a.applicationId !== appId) return 1;
@@ -366,8 +250,7 @@ function renderList(appId, query) {
         <span class="clm-badge ${linked ? 'clm-badge--linked' : 'clm-badge--unlinked'}">
           ${linked ? '✓ Linked' : '+ Link'}
         </span>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
   list.querySelectorAll('.clm-item').forEach(item =>
@@ -375,13 +258,10 @@ function renderList(appId, query) {
   );
 }
 
-// ─── Toggle link ──────────────────────────────────────────────────────────────
 async function toggleLink(contactId, appId) {
   const contact = allContacts.find(c => String(c._id) === contactId);
   if (!contact) return;
-
   const newAppId = contact.applicationId === appId ? null : appId;
-
   try {
     const res = await fetch(`${NET_API}/${contactId}`, {
       method: 'PUT',
@@ -393,20 +273,17 @@ async function toggleLink(contactId, appId) {
     const updated = await res.json();
     allContacts = allContacts.map(c => String(c._id) === contactId ? updated : c);
     renderList(appId, document.getElementById('clm-search')?.value?.toLowerCase() || '');
-  } catch {
-    alert('Could not update contact. Please try again.');
-  }
+  } catch { alert('Could not update. Please try again.'); }
 }
 
-// ─── Watch table for new rows ─────────────────────────────────────────────────
+// ─── Watch table ──────────────────────────────────────────────────────────────
 function watchTable() {
   const tbody = document.getElementById('app-table-body');
   if (!tbody) return;
 
-  // Inject into existing rows
+  // Inject into any rows already in DOM
   tbody.querySelectorAll('tr').forEach(injectCell);
 
-  // Watch for new rows (triggered by Anurag's filter/search/pagination)
   new MutationObserver(mutations => {
     for (const m of mutations) {
       for (const node of m.addedNodes) {
@@ -419,7 +296,7 @@ function watchTable() {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
   injectStyles();
-  await loadContacts();
+  await loadData();
   injectHeader();
   watchTable();
 }
