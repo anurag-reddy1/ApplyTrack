@@ -95,9 +95,15 @@ body {
   margin-top: 4px;
 }
 
-#metric-interviews .metric-value { color: var(--color-warning); }
-#metric-offers .metric-value     { color: var(--color-success); }
-#metric-rate .metric-value       { color: var(--color-info); }
+#metric-interviews .metric-value {
+  color: var(--color-warning);
+}
+#metric-offers .metric-value {
+  color: var(--color-success);
+}
+#metric-rate .metric-value {
+  color: var(--color-info);
+}
 
 /* Section title */
 .section-title {
@@ -116,7 +122,9 @@ body {
   font-size: 0.875rem;
 }
 
-.form-control.search-input::placeholder { color: var(--color-text-3); }
+.form-control.search-input::placeholder {
+  color: var(--color-text-3);
+}
 
 .form-control.search-input:focus {
   border-color: var(--color-primary);
@@ -239,17 +247,41 @@ body {
   white-space: nowrap;
 }
 
-.status-chip--Wishlist        { background-color: rgba(154,163,184,0.12); color: var(--status-wishlist); }
-.status-chip--Applied         { background-color: rgba(79,124,255,0.15);  color: var(--status-applied); }
+.status-chip--Wishlist {
+  background-color: rgba(154, 163, 184, 0.12);
+  color: var(--status-wishlist);
+}
+.status-chip--Applied {
+  background-color: rgba(79, 124, 255, 0.15);
+  color: var(--status-applied);
+}
 .status-chip--Phone\.Screen,
-.status-chip--Phone           { background-color: rgba(167,139,250,0.15); color: var(--status-phone); }
+.status-chip--Phone {
+  background-color: rgba(167, 139, 250, 0.15);
+  color: var(--status-phone);
+}
 .status-chip--Technical\.Interview,
-.status-chip--Technical       { background-color: rgba(245,197,66,0.15);  color: var(--status-technical); }
+.status-chip--Technical {
+  background-color: rgba(245, 197, 66, 0.15);
+  color: var(--status-technical);
+}
 .status-chip--Final\.Round,
-.status-chip--Final           { background-color: rgba(249,115,22,0.15);  color: var(--status-final); }
-.status-chip--Offer           { background-color: rgba(45,217,141,0.15);  color: var(--status-offer); }
-.status-chip--Rejected        { background-color: rgba(255,92,92,0.12);   color: var(--status-rejected); }
-.status-chip--Withdrawn       { background-color: rgba(99,107,130,0.12);  color: var(--status-withdrawn); }
+.status-chip--Final {
+  background-color: rgba(249, 115, 22, 0.15);
+  color: var(--status-final);
+}
+.status-chip--Offer {
+  background-color: rgba(45, 217, 141, 0.15);
+  color: var(--status-offer);
+}
+.status-chip--Rejected {
+  background-color: rgba(255, 92, 92, 0.12);
+  color: var(--status-rejected);
+}
+.status-chip--Withdrawn {
+  background-color: rgba(99, 107, 130, 0.12);
+  color: var(--status-withdrawn);
+}
 
 /* Table action buttons */
 .td-actions {
@@ -318,9 +350,21 @@ body {
 }
 
 /* .table-empty .empty-* beats Bootstrap's p selector */
-.table-empty .empty-icon  { font-size: 2.5rem; line-height: 1; color: inherit; }
-.table-empty .empty-title { font-size: 1rem; font-weight: 600; color: var(--color-text-2); }
-.table-empty .empty-sub   { font-size: 0.875rem; color: var(--color-text-3); max-width: 300px; }
+.table-empty .empty-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+  color: inherit;
+}
+.table-empty .empty-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-2);
+}
+.table-empty .empty-sub {
+  font-size: 0.875rem;
+  color: var(--color-text-3);
+  max-width: 300px;
+}
 
 /* Modal overrides */
 .app-modal-content {
@@ -350,7 +394,9 @@ body {
   color: var(--color-text);
 }
 
-.app-modal-content .form-control::placeholder { color: var(--color-text-3); }
+.app-modal-content .form-control::placeholder {
+  color: var(--color-text-3);
+}
 
 .app-modal-content .form-control:focus,
 .app-modal-content .form-select:focus {

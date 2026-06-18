@@ -94,16 +94,19 @@ ApplyTrack/
 ### Installation Steps
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/anurag-reddy1/ApplyTrack.git
    ```
 
 2. **Navigate into the project directory**:
+
    ```bash
    cd ApplyTrack
    ```
 
 3. **Install dependencies**:
+
    ```bash
    npm install
    ```
@@ -152,6 +155,7 @@ node backend/seed.js your@email.com --clear
 ## Features
 
 ### Pipeline (Dashboard)
+
 - Add, edit, and delete job applications
 - Filter by status: All, Wishlist, Applied, Phone Screen, Technical Interview, Final Round, Offer, Rejected, Withdrawn
 - Sort by any column (Company, Role, Status, Salary, Applied Date)
@@ -162,12 +166,14 @@ node backend/seed.js your@email.com --clear
 - **Contacts column** — link networking contacts directly to applications from the table
 
 ### Interviews
+
 - Track every interview round with company, role, round type, date, status, and result
 - Side panel for technical and behavioral prep notes per round
 - Filter by status (Upcoming / Completed / Cancelled), search, and sort all columns
 - Server-side pagination
 
 ### Networking
+
 - Store recruiter and engineer contacts with email, phone, LinkedIn, and follow-up dates
 - Stats bar showing total contacts, overdue follow-ups, and contacts made this month (always reflects full collection, not just current page)
 - Link contacts to applications via the Pipeline Contacts column
@@ -192,11 +198,12 @@ node backend/seed.js your@email.com --clear
 ## Authors
 
 **Anurag Reddy Pottigari**
+
 - **Email**: [pottigari.a@northeastern.edu](mailto:pottigari.a@northeastern.edu)
 - **LinkedIn**: [linkedin.com/in/anurag-reddy-pottigari](https://www.linkedin.com/in/anurag-reddy-7140a85a)
 - **GitHub**: [github.com/anurag-reddy1](https://github.com/anurag-reddy1)
 
-**Sanjay** *(Networking & Interviews pages)*
+**Sanjay** _(Networking & Interviews pages)_
 
 ---
 

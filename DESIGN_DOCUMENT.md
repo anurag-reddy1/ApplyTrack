@@ -89,28 +89,28 @@ ApplyTrack is a full-stack web application that centralizes every stage of a stu
 
 The application uses a **dark theme** throughout, consistent with developer tooling aesthetics:
 
-| Token | Value | Usage |
-|---|---|---|
-| `--color-bg` | `#0d0f14` | Page background |
-| `--color-bg-2` | `#13161e` | Navbar, card backgrounds |
-| `--color-bg-3` | `#1a1e28` | Hover states, active tabs |
-| `--color-border` | `#1e2533` | All borders and dividers |
-| `--color-text` | `#e2e8f0` | Primary text |
-| `--color-text-2` | `#8892a4` | Secondary / muted text |
+| Token             | Value     | Usage                         |
+| ----------------- | --------- | ----------------------------- |
+| `--color-bg`      | `#0d0f14` | Page background               |
+| `--color-bg-2`    | `#13161e` | Navbar, card backgrounds      |
+| `--color-bg-3`    | `#1a1e28` | Hover states, active tabs     |
+| `--color-border`  | `#1e2533` | All borders and dividers      |
+| `--color-text`    | `#e2e8f0` | Primary text                  |
+| `--color-text-2`  | `#8892a4` | Secondary / muted text        |
 | `--color-primary` | `#2563eb` | Buttons, active states, links |
 
 Status chips use distinct semantic colors:
 
-| Status | Color |
-|---|---|
-| Wishlist | Muted grey |
-| Applied | Blue |
-| Phone Screen | Teal |
-| Technical Interview | Purple |
-| Final Round | Amber |
-| Offer | Green |
-| Rejected | Red |
-| Withdrawn | Grey |
+| Status              | Color      |
+| ------------------- | ---------- |
+| Wishlist            | Muted grey |
+| Applied             | Blue       |
+| Phone Screen        | Teal       |
+| Technical Interview | Purple     |
+| Final Round         | Amber      |
+| Offer               | Green      |
+| Rejected            | Red        |
+| Withdrawn           | Grey       |
 
 ### Typography
 
@@ -127,14 +127,14 @@ Status chips use distinct semantic colors:
 
 ### Component Decisions
 
-| Component | Approach | Reason |
-|---|---|---|
-| Table | Bootstrap `.table.table-hover` + dark overrides | Consistent with Bootstrap's dark theme |
-| Modals | Custom overlay with `hidden` attribute toggle (interviews/networking), Bootstrap Modal API (pipeline) | Pipeline uses Bootstrap JS already loaded; interviews/networking keep it simple |
-| Pagination | Bootstrap `.pagination` component + custom windowed `buildPageRange()` logic | Reuses Bootstrap styling, custom logic for ellipsis |
-| Filter pills | Custom pill buttons with `filter-pill--active` class | Bootstrap tabs don't match the desired pill aesthetic |
-| Status chips | Custom `.status-chip` spans with per-status color classes | Need 8 distinct status colors, Bootstrap badges don't cover them |
-| Badges (interviews) | Custom `.badge--blue/green/yellow/red/grey` classes | Round/Result badges need colors not in Bootstrap's palette |
+| Component           | Approach                                                                                              | Reason                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Table               | Bootstrap `.table.table-hover` + dark overrides                                                       | Consistent with Bootstrap's dark theme                                          |
+| Modals              | Custom overlay with `hidden` attribute toggle (interviews/networking), Bootstrap Modal API (pipeline) | Pipeline uses Bootstrap JS already loaded; interviews/networking keep it simple |
+| Pagination          | Bootstrap `.pagination` component + custom windowed `buildPageRange()` logic                          | Reuses Bootstrap styling, custom logic for ellipsis                             |
+| Filter pills        | Custom pill buttons with `filter-pill--active` class                                                  | Bootstrap tabs don't match the desired pill aesthetic                           |
+| Status chips        | Custom `.status-chip` spans with per-status color classes                                             | Need 8 distinct status colors, Bootstrap badges don't cover them                |
+| Badges (interviews) | Custom `.badge--blue/green/yellow/red/grey` classes                                                   | Round/Result badges need colors not in Bootstrap's palette                      |
 
 ---
 
@@ -193,6 +193,7 @@ GET /api/<collection>?page=1&limit=20&sortBy=<field>&sortDir=asc|desc&search=<qu
 ```
 
 Response shape:
+
 ```json
 {
   "data": [...],

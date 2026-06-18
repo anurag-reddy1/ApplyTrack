@@ -4,7 +4,11 @@
 
 body {
   background-color: var(--color-bg);
-  background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(79, 124, 255, 0.12), transparent);
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% -10%,
+    rgba(79, 124, 255, 0.12),
+    transparent
+  );
 }
 
 .auth-container {
