@@ -52,7 +52,6 @@ ApplyTrack/
 │   │   ├── interviews.js          # Full CRUD + paginated GET with sort/filter/search
 │   │   └── networking.js          # Full CRUD + paginated GET with sort/filter/search + stats
 │   ├── server.js                  # Express app bootstrap, CORS, static serving, routes
-│   └── seed.js                    # Seed script — inserts 1100 dummy records per collection
 ├── frontend/
 │   ├── css/
 │   │   ├── base.css               # Design tokens, shared utilities, toast, spinner
@@ -136,22 +135,6 @@ Then open your browser and navigate to:
 
 Register a new account and you will be redirected to the Pipeline dashboard automatically.
 
-### Seeding Demo Data
-
-To populate 1100 dummy records per collection for testing pagination and sorting:
-
-```bash
-node backend/seed.js your@email.com
-```
-
-To wipe existing records and start fresh before seeding:
-
-```bash
-node backend/seed.js your@email.com --clear
-```
-
----
-
 ## Features
 
 ### Pipeline (Dashboard)
@@ -189,7 +172,7 @@ node backend/seed.js your@email.com --clear
   - _Bootstrap 5 Migration_: Assisted with migrating the application from scratch-built CSS to Bootstrap 5, replacing custom components with Bootstrap equivalents while maintaining custom design tokens for theming.
   - _Prompt Used_: "I basically want to use bootstrap for most of the things so that we have minimal CSS. Is this achievable?"
   - _Server-Side Pagination_: Generated the MongoDB `.find().sort().skip().limit()` + `countDocuments()` pattern for all three collections and the corresponding frontend pagination render logic.
-  - _Prompt Used_: "Do you think we should implement pagination and sorting? Be brutally honest."
+  - _Prompt Used_: "how to implement pagination and sorting?"
   - _Bug Fixes_: Resolved issues including broken job link routing, `bootstrap is not defined` ESLint errors, hidden table empty states, and incorrect response rate calculation.
   - _Also used for_: Navbar consistency fixes across pages, adding column sorting, notes tooltip, contacts-column feature, and generating this documentation.
 
