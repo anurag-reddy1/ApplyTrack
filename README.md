@@ -186,7 +186,12 @@ Register a new account and you will be redirected to the Pipeline dashboard auto
 - **LinkedIn**: [linkedin.com/in/anurag-reddy-pottigari](https://www.linkedin.com/in/anurag-reddy-7140a85a)
 - **GitHub**: [github.com/anurag-reddy1](https://github.com/anurag-reddy1)
 
-**Sanjay** _(Networking & Interviews pages)_
+**Sanjay** 
+- **Email**: [balakrishnanvenkat.s@northeastern.edu](mailto:balakrishnanvenkat.s@northeastern.edu)
+- **LinkedIn**: [www.linkedin.com/in/sanjaysundarbv](https://www.linkedin.com/in/sanjaysundarbv/?skipRedirect=true)
+- **GitHub**: [github.com/sasu3303](https://github.com/sasu3303)
+
+
 
 ---
 
