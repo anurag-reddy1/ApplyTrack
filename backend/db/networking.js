@@ -3,15 +3,6 @@ import { getDB } from "../config/db.js";
 
 const COLLECTION = "networking";
 
-export async function getAllContacts(filter = {}) {
-  const db = getDB();
-  return db
-    .collection(COLLECTION)
-    .find(filter)
-    .sort({ followUpDate: 1 })
-    .toArray();
-}
-
 export async function getContactById(id) {
   const db = getDB();
   return db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
