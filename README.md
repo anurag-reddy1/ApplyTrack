@@ -206,7 +206,7 @@ Northeastern University — Khoury College of Computer Sciences
 
 ## Video Demonstration
 
-🎥 [Watch the demo video](#https://youtu.be/rswyWj3NTU0)
+🎥 [Watch the demo video](https://youtu.be/rswyWj3NTU0)
 
 ---
 
