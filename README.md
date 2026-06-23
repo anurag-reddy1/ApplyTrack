@@ -16,7 +16,7 @@ The objective of ApplyTrack is to give job-seeking students a centralized, struc
 
 ## Screenshot
 
-![ApplyTrack Dashboard](./frontend/images/application.png)
+![ApplyTrack Dashboard](./frontend/images/application.gif)
 
 ---
 
@@ -175,6 +175,7 @@ Register a new account and you will be redirected to the Pipeline dashboard auto
   - _Prompt Used_: "how to implement pagination and sorting?"
   - _Bug Fixes_: Resolved issues including broken job link routing, `bootstrap is not defined` ESLint errors, hidden table empty states, and incorrect response rate calculation.
   - _Also used for_: Navbar consistency fixes across pages, adding column sorting, notes tooltip, contacts-column feature, and generating this documentation.
+  - _Prompt Used_: Convert the provided images into the readme format for the Wireframes in the Design_Document.md.
 
 ---
 
@@ -200,7 +201,7 @@ Northeastern University — Khoury College of Computer Sciences
 
 ## Video Demonstration
 
-🎥 [Watch the demo video](#)
+🎥 [Watch the demo video](#https://youtu.be/rswyWj3NTU0)
 
 ---
 
