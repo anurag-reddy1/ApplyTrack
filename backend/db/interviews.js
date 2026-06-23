@@ -3,11 +3,6 @@ import { getDB } from "../config/db.js";
 
 const COLLECTION = "interviews";
 
-export async function getAllInterviews() {
-  const db = getDB();
-  return db.collection(COLLECTION).find({}).sort({ date: 1 }).toArray();
-}
-
 export async function getInterviewById(id) {
   const db = getDB();
   return db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
