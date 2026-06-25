@@ -3,6 +3,8 @@
  * Identifies rows by matching company+role text against the applications API.
  */
 
+import { getSession } from "./modules/storage.js";
+
 const NET_API = "/api/networking";
 const APP_API = "/api/applications";
 
@@ -63,9 +65,13 @@ function injectStyles() {
 // ─── Load data ────────────────────────────────────────────────────────────────
 async function loadData() {
   try {
+    const session = getSession();
+    const userId = session?.userId ?? "";
     const [cRes, aRes] = await Promise.all([
       fetch(`${NET_API}?limit=2000`, { credentials: "include" }),
-      fetch(APP_API, { credentials: "include" }),
+      fetch(`${APP_API}?userId=${encodeURIComponent(userId)}&limit=2000`, {
+        credentials: "include",
+      }),
     ]);
     if (cRes.ok) {
       const cData = await cRes.json();

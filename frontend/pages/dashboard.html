@@ -6,7 +6,7 @@
     <title>ApplyTrack — Dashboard</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🎯</text></svg>"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E🎯%3C/text%3E%3C/svg%3E"
     />
     <link
       rel="stylesheet"
@@ -86,15 +86,13 @@
           <div
             class="filter-tabs"
             id="filter-tabs"
-            role="tablist"
             aria-label="Filter by status"
           >
             <button
               type="button"
               class="filter-tab active"
               data-status="all"
-              role="tab"
-              aria-selected="true"
+              aria-pressed="true"
             >
               All
             </button>
@@ -102,8 +100,7 @@
               type="button"
               class="filter-tab"
               data-status="Wishlist"
-              role="tab"
-              aria-selected="false"
+              aria-pressed="false"
             >
               Wishlist
             </button>
@@ -111,8 +108,7 @@
               type="button"
               class="filter-tab"
               data-status="Applied"
-              role="tab"
-              aria-selected="false"
+              aria-pressed="false"
             >
               Applied
             </button>
@@ -120,8 +116,7 @@
               type="button"
               class="filter-tab"
               data-status="Phone Screen"
-              role="tab"
-              aria-selected="false"
+              aria-pressed="false"
             >
               Phone Screen
             </button>
@@ -129,8 +124,7 @@
               type="button"
               class="filter-tab"
               data-status="Technical Interview"
-              role="tab"
-              aria-selected="false"
+              aria-pressed="false"
             >
               Technical
             </button>
@@ -138,8 +132,7 @@
               type="button"
               class="filter-tab"
               data-status="Final Round"
-              role="tab"
-              aria-selected="false"
+              aria-pressed="false"
             >
               Final Round
             </button>
@@ -147,8 +140,7 @@
               type="button"
               class="filter-tab"
               data-status="Offer"
-              role="tab"
-              aria-selected="false"
+              aria-pressed="false"
             >
               Offer
             </button>
@@ -156,8 +148,7 @@
               type="button"
               class="filter-tab"
               data-status="Rejected"
-              role="tab"
-              aria-selected="false"
+              aria-pressed="false"
             >
               Rejected
             </button>
@@ -165,8 +156,7 @@
               type="button"
               class="filter-tab"
               data-status="Withdrawn"
-              role="tab"
-              aria-selected="false"
+              aria-pressed="false"
             >
               Withdrawn
             </button>
@@ -247,6 +237,7 @@
       class="modal fade"
       id="app-modal"
       tabindex="-1"
+      role="dialog"
       aria-labelledby="modal-title"
       aria-hidden="true"
     >
@@ -255,9 +246,9 @@
       >
         <div class="modal-content app-modal-content">
           <div class="modal-header">
-            <h5 class="modal-title fw-bold" id="modal-title">
+            <h3 class="modal-title fw-bold fs-5" id="modal-title">
               Add Application
-            </h5>
+            </h3>
             <button
               type="button"
               class="btn-close"
