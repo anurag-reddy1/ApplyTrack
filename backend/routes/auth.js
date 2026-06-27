@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getDB } from "../config/db.js";
+import bcrypt from "bcrypt";
 
 const router = Router();
 
@@ -22,10 +23,12 @@ router.post("/register", async (req, res) => {
         .json({ error: "An account with this email already exists." });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = {
       username: username.trim(),
       email: email.trim().toLowerCase(),
-      password,
+      password: hashedPassword,
       createdAt: new Date(),
     };
 
@@ -55,13 +58,17 @@ router.post("/login", async (req, res) => {
 
     const db = getDB();
     const users = db.collection("users");
-
     const user = await users.findOne({
       email: email.trim().toLowerCase(),
-      password,
     });
 
     if (!user) {
+      return res.status(401).json({ error: "Invalid email or password." });
+    }
+
+    const passwordMatches = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatches) {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
